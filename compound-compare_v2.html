@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>연복리와 월복리, 기말·기초 납입 비교</title>
+<meta name="description" content="연복리와 월복리, 기말 납입과 기초 납입의 연도별 결과와 차액을 비교합니다.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="연복리와 월복리, 기말·기초 납입 비교">
+<meta property="og:description" content="복리 주기와 납입 시점에 따라 합계금액이 얼마나 달라지는지 확인하세요.">
+<meta property="og:url" content="https://yunhwon.github.io/Retirement-planning/compound-compare_v2.html">
+<style>
+:root{--c1:#1a8f5b;--c2:#8e44ad;--c3:#2457d6;--c4:#e07b00;--tA:#e6edfc;--tB:#fff0dc;--tD:#eceff3;--hA:#2457d6;--hB:#e07b00;--hD:#6b7585;
+--bg:#f4f6fa;--card:#fff;--ink:#1b2430;--sub:#667385;--line:#e1e6ee;--accent:#2457d6;--accent2:#e6edfc;--bad:#c0392b}
+@media (prefers-color-scheme:dark){:root{--c1:#4fd19a;--c2:#c08ae0;--c3:#7aa2ff;--c4:#ffb454;--tA:#1f2b46;--tB:#3a2a14;--tD:#272d37;--hA:#3b63c9;--hB:#b8631a;--hD:#58616f;
+--bg:#12161c;--card:#1b212a;--ink:#e8ecf2;--sub:#9aa5b5;--line:#2c3542;--accent:#7aa2ff;--accent2:#1f2b46;--bad:#ff8a7a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:4px 0 6px}
+h2{font-size:16px;margin:0 0 4px}
+.lead{margin:0 0 16px;color:var(--sub);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.grid{grid-template-columns:minmax(0,1fr)}}
+label{display:block;font-size:13px;color:var(--sub)}
+.inp{display:flex;align-items:center;margin-top:4px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:0 12px}
+.inp:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent2)}
+.inp input{flex:1;min-width:0;width:100%;border:0;background:transparent;color:var(--ink);font:inherit;font-size:18px;font-weight:600;padding:10px 0;outline:0;text-align:right}
+.inp em{font-style:normal;color:var(--sub);margin-left:6px;font-size:14px}
+.err{color:var(--bad);font-size:13px;margin:10px 0 0}
+.err:empty{display:none}
+.dim{opacity:.35}
+.lbl{font-size:13px;color:var(--sub)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:6px}
+.stats div{border-left:4px solid var(--line);padding-left:10px}
+.stats span{display:block;font-size:12px;color:var(--sub)}
+.stats b{font-size:17px}
+.stats small{display:block;font-size:12px;color:var(--sub)}
+.insight{font-size:13.5px;color:var(--sub);margin:12px 0 0}
+.insight b{color:var(--ink)}
+#chart svg{width:100%;height:auto;display:block}
+.axis{fill:var(--sub);font-size:11px}
+.grd{stroke:var(--line);stroke-width:1}
+.ln{fill:none;stroke-width:2.5;stroke-linejoin:round}
+.pr{fill:none;stroke:var(--sub);stroke-width:1.5;stroke-dasharray:5 4}
+.vlab{font-size:11px;font-weight:700;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+.vl{stroke:var(--sub);stroke-width:1;stroke-dasharray:3 3;opacity:0}
+.hv:hover .vl{opacity:1}
+.band{fill:transparent}
+.legend{font-size:13px;color:var(--sub);margin:4px 0 4px}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;margin:0 6px 3px 14px;vertical-align:middle}
+.legend i:first-child{margin-left:0}
+.tbl{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 9px;text-align:right;white-space:nowrap}
+th{position:sticky;top:0;color:var(--ink);font-weight:700;z-index:2}
+thead tr:nth-child(2) th{top:28px}
+th.g{text-align:center;color:#fff}
+th.hA{background:var(--hA)}th.hB{background:var(--hB)}th.hD{background:var(--hD)}
+thead tr:nth-child(2) th.sA{background:var(--tA)}thead tr:nth-child(2) th.sB{background:var(--tB)}thead tr:nth-child(2) th.sD{background:var(--tD)}
+th.k,td.k{text-align:center;position:sticky;left:0;z-index:3;background:var(--card);min-width:62px}
+th.k{background:var(--accent2);z-index:4}
+td.cA{background:var(--tA)}td.cB{background:var(--tB)}td.cD{background:var(--tD)}
+td.gl,th.gl{border-left:2px solid var(--sub)}
+tr.mo td.k{font-weight:400;color:var(--sub)}
+tbody tr:nth-child(even) td:not(.k){filter:brightness(.97)}
+td.neg{color:var(--bad)}
+tr.yr1 td{border-top:2px solid var(--sub)}
+.note{font-size:12px;color:var(--sub);margin:6px 2px 0}
+.ln,.pr,.grd,.lrg,.lch{vector-effect:non-scaling-stroke}
+.lbg{fill:var(--card)}
+.lrg{fill:none;stroke:var(--ink);stroke-width:2}
+.lch{stroke:var(--sub);stroke-width:1}
+.lbx{fill:var(--card);stroke:var(--line);stroke-width:1.5}
+.ltt{fill:var(--ink);font-size:11px;font-weight:700}
+.ltx{fill:var(--ink);font-size:11px}
+#chart.zm{cursor:crosshair}
+.zrow{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);margin-top:12px}
+.zrow select{width:auto;margin:0;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:13px}
+</style>
+</head>
+<body>
+<main class="wrap">
+<h1>연복리 vs 월복리, 기말 vs 기초 납입</h1>
+<p class="lead">같은 금액을 넣어도 이자를 붙이는 주기(연복리·월복리)와 납입 시점(기말·기초)에 따라 결과가 달라집니다.</p>
+
+<section class="card">
+  <div class="grid">
+    <label for="a">매월 납입액<span class="inp"><input id="a" inputmode="numeric" autocomplete="off" value="500"></span></label>
+    <label for="b">연 수익률<span class="inp"><input id="b" inputmode="decimal" autocomplete="off" value="8"><em>%</em></span></label>
+    <label for="c">투자 기간<span class="inp"><input id="c" inputmode="numeric" autocomplete="off" value="30"><em>년</em></span></label>
+  </div>
+  <p id="err" class="err" role="alert"></p>
+  <p class="note">연복리는 1년치 납입액(월 납입액×12)을 해마다 연말(기말)·연초(기초)에 한 번 넣고 연 수익률을 1년에 한 번 붙입니다. 월복리는 매월 말(기말)·월초(기초)에 넣고 연 수익률÷12를 매달 붙입니다.</p>
+</section>
+
+<section class="card" id="res" aria-live="polite">
+  <div class="lbl"><span id="yrs">30년</span> 후 합계금액</div>
+  <div class="stats" id="stats"></div>
+  <p class="insight" id="insight"></p>
+  <div class="zrow"><label for="zm" style="display:inline">돋보기</label><select id="zm"><option value="0">끄기</option><option value="4">×4</option><option value="8" selected>×8</option><option value="16">×16</option></select><span>그래프 위에 커서를 올리면 그 부분이 확대됩니다. 터치는 그래프를 눌러 보세요.</span></div>
+  <div id="chart" class="zm" style="margin-top:8px"></div>
+  <div class="legend" id="legend"></div>
+</section>
+
+<section class="card">
+  <h2>연복리 — 연도별 비교</h2>
+  <p class="lead" style="margin:0">기말 납입과 기초 납입, 그리고 그 차액(기초 − 기말)</p>
+  <div class="tbl"><table><thead id="th1"></thead><tbody id="tb1"></tbody></table></div>
+</section>
+
+<section class="card">
+  <h2>월복리 — 첫해는 월별, 이후 연도별 비교</h2>
+  <p class="lead" style="margin:0">기말 납입과 기초 납입, 그리고 그 차액(기초 − 기말)</p>
+  <div class="tbl"><table><thead id="th2"></thead><tbody id="tb2"></tbody></table></div>
+  <p class="note">표를 좌우로 밀어서 더 볼 수 있어요. 월복리 표의 첫해는 1~12개월을 한 줄씩 보여 주고, 2년차부터 한 해를 한 줄로 묶습니다. "그해 납입·수익"은 그 줄(월 또는 해) 동안의 금액입니다.</p>
+</section>
+<p class="note">세전 기준이며 수수료·세금·물가 상승은 반영하지 않은 단순 시뮬레이션입니다. 결과는 참고용이며 투자 권유가 아닙니다.</p>
+</main>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var nf = new Intl.NumberFormat('ko-KR'), state = null;
+  function f0(x){ return nf.format(Math.round(x)); }
+  function num(s){ return parseFloat(String(s).replace(/[,\s원%년]/g, '')); }
+  function readInputs(){
+    var A = num($('a').value), B = num($('b').value), C = num($('c').value), e = '';
+    if (!isFinite(A) || A <= 0) e = '매월 납입액을 0보다 큰 값으로 입력해 주세요.';
+    else if (A > 1e10) e = '매월 납입액이 너무 큽니다.';
+    else if (!isFinite(B) || B < 0 || B > 100) e = '연 수익률은 0~100% 사이로 입력해 주세요.';
+    else if (!isFinite(C) || C < 1 || C > 60 || Math.floor(C) !== C) e = '투자 기간은 1~60년 사이의 정수로 입력해 주세요.';
+    return {A: A, B: B / 100, C: C, e: e};
+  }
+  /* 연복리: 해마다 12A를 연말/연초에 한 번 납입 */
+  function annual(p, begin){
+    var out = [], bal = 0, dep = 0, gain = 0;
+    for (var y = 1; y <= p.C; y++){
+      var d = p.A * 12, it = (begin ? bal + d : bal) * p.B;
+      bal = bal + d + it; dep += d; gain += it;
+      out.push({k: y + '년', y: y, dY: d, dC: dep, gY: it, gC: gain, t: bal, ye: true});
+    }
+    return out;
+  }
+  /* 월복리: 매월 A를 월말/월초에 납입 (월 수익률 = 연/12) */
+  function monthly(p, begin){
+    var r = p.B / 12, bal = 0, dep = 0, gain = 0, ym = [], yr = [], yg = 0, m;
+    for (m = 1; m <= p.C * 12; m++){
+      var it = (begin ? bal + p.A : bal) * r;
+      bal = bal + p.A + it; dep += p.A; gain += it; yg += it;
+      if (m <= 12) ym.push({k: m + '개월', y: 1, dY: p.A, dC: dep, gY: it, gC: gain, t: bal});
+      if (m % 12 === 0){
+        yr.push({k: (m / 12) + '년', y: m / 12, dY: p.A * 12, dC: dep, gY: yg, gC: gain, t: bal, ye: true});
+        yg = 0;
+      }
+    }
+    return {months: ym, years: yr};
+  }
+  function simulate(p){
+    var m1 = monthly(p, false), m2 = monthly(p, true);
+    return {
+      aE: annual(p, false), aB: annual(p, true),
+      mE: m1, mB: m2
+    };
+  }
+  var SER = [
+    {id: 'aE', n: '연복리 · 기말 납입', c: 'c1'}, {id: 'aB', n: '연복리 · 기초 납입', c: 'c2'},
+    {id: 'mE', n: '월복리 · 기말 납입', c: 'c3'}, {id: 'mB', n: '월복리 · 기초 납입', c: 'c4'}
+  ];
+  function yearsOf(s, id){ return id.charAt(0) === 'a' ? s[id] : s[id].years; }
+  function chart(s, p){
+    var el = $('chart'), W = Math.max(300, Math.round(el.clientWidth || 700)), pl = 70, pr = 16, pt = 18, pb = 30, UNIT = 83, n = p.C, iw = W - pl - pr;
+    var tots = {}; SER.forEach(function(S){ var ys = yearsOf(s, S.id); tots[S.id] = [0].concat(ys.map(function(r){ return r.t; })); });
+    var raw = Math.max.apply(null, SER.map(function(S){ return tots[S.id][n]; })) || 1;
+    var p8 = {A: p.A, B: 0.08, C: p.C}, m8 = monthly(p8, false).years, raw8 = m8[m8.length - 1].t || 1;
+    var mag = Math.pow(10, Math.floor(Math.log10(raw8 / 4))), f = raw8 / 4 / mag, stepN = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
+    var kN = Math.max(1, Math.ceil(raw / stepN - 1e-9)), max = stepN * kN, ih = UNIT * kN, H = pt + pb + ih;
+    function X(y){ return pl + iw * y / n; }
+    function Y(v){ return pt + ih * (1 - v / max); }
+    var gx = '', tx = '', dep = [0].concat(s.aE.map(function(r){ return r.dC; }));
+    for (var g = 0; g <= kN; g++){
+      var yy = Y(stepN * g).toFixed(1);
+      gx += '<line class="grd" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + yy + '" y2="' + yy + '"/>';
+      tx += '<text class="axis" text-anchor="end" x="' + (pl - 6) + '" y="' + (+yy + 4) + '">' + f0(stepN * g) + '</text>';
+    }
+    var stp = Math.ceil(n / Math.max(3, Math.floor(iw / 60)));
+    for (var y = 0; y <= n; y++) if (y % stp === 0 || y === n) tx += '<text class="axis" text-anchor="middle" x="' + X(y).toFixed(1) + '" y="' + (H - 8) + '">' + y + '년</text>';
+    gx += '<path class="pr" d="' + dep.map(function(v, i){ return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); }).join('') + '"/>';
+    SER.forEach(function(S){
+      gx += '<path class="ln" style="stroke:var(--' + S.c + ')" d="' + tots[S.id].map(function(v, i){ return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); }).join('') + '"/>';
+    });
+    var bw = iw / n, bands = '';
+    for (var i = 0; i <= n; i++){
+      var tip = i + '년차\n누적 납입 ' + f0(dep[i]) + SER.map(function(S){ return '\n' + S.n + ' 합계 ' + f0(tots[S.id][i]); }).join('');
+      bands += '<g class="hv"><title>' + tip + '</title><line class="vl" x1="' + X(i).toFixed(1) + '" x2="' + X(i).toFixed(1) + '" y1="' + pt + '" y2="' + (H - pb) + '"/><rect class="band" x="' + (X(i) - bw / 2).toFixed(1) + '" y="' + pt + '" width="' + bw.toFixed(1) + '" height="' + ih + '"/></g>';
+    }
+    var lab = SER.map(function(S){ return {S: S, y: Y(tots[S.id][n]), v: tots[S.id][n]}; }).sort(function(a, b){ return a.y - b.y; });
+    for (var k = 1; k < lab.length; k++) lab[k].ly = Math.max(lab[k].y, (lab[k - 1].ly !== undefined ? lab[k - 1].ly : lab[k - 1].y) + 14);
+    lab.forEach(function(o){
+      tx += '<circle cx="' + X(n).toFixed(1) + '" cy="' + o.y.toFixed(1) + '" r="3.5" style="fill:var(--' + o.S.c + ')"/><text class="vlab" text-anchor="end" style="fill:var(--' + o.S.c + ')" x="' + (X(n) - 8).toFixed(1) + '" y="' + ((o.ly !== undefined ? o.ly : o.y) - 6).toFixed(1) + '">' + f0(o.v) + '</text>';
+    });
+    var lens = '<defs><clipPath id="lc"><circle r="' + LR + '"/></clipPath></defs><g id="lensG" style="display:none;pointer-events:none"><circle r="' + LR + '" class="lbg"/><g clip-path="url(#lc)"><g id="lz"><use href="#gx"/></g></g><circle r="' + LR + '" class="lrg"/><line class="lch" x1="-8" x2="8" y1="0" y2="0"/><line class="lch" x1="0" x2="0" y1="-8" y2="8"/><g id="lbox"></g></g>';
+    el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="복리 주기와 납입 시점별 합계금액 선그래프"><g id="gx">' + gx + '</g>' + tx + bands + lens + '</svg>';
+    state.cm = {W: W, H: H, pl: pl, pr: pr, pt: pt, pb: pb, iw: iw, n: n, tots: tots, dep: dep};
+  }
+  /* ---- 돋보기 ---- */
+  var LR = 78, zoom = 8;
+  function lensHide(){ var g = $('chart').querySelector('#lensG'); if (g) g.style.display = 'none'; }
+  function lensMove(e){
+    var cm = state && state.cm, svg = $('chart').querySelector('svg');
+    if (!cm || !svg || zoom === 0) return;
+    var r = svg.getBoundingClientRect(), x = (e.clientX - r.left) * cm.W / r.width, y = (e.clientY - r.top) * cm.H / r.height;
+    if (x < cm.pl - 4 || x > cm.W - cm.pr + 4 || y < cm.pt - 4 || y > cm.H - cm.pb + 4){ lensHide(); return; }
+    var g = svg.querySelector('#lensG'); g.style.display = '';
+    var lx = Math.max(LR + 2, Math.min(cm.W - LR - 2, x)), ly = Math.max(LR + 2, Math.min(cm.H - LR - 2, y));
+    g.setAttribute('transform', 'translate(' + lx.toFixed(1) + ',' + ly.toFixed(1) + ')');
+    svg.querySelector('#lz').setAttribute('transform', 'scale(' + zoom + ') translate(' + (-x).toFixed(2) + ',' + (-y).toFixed(2) + ')');
+    var i = Math.max(0, Math.min(cm.n, Math.round((x - cm.pl) / cm.iw * cm.n)));
+    var bx = (lx + LR + 12 + 176 > cm.W) ? -LR - 12 - 176 : LR + 12, by = -LR, hh = 24 + SER.length * 17;
+    if (ly + by < 2) by = 2 - ly;
+    var h = '<rect class="lbx" x="' + bx + '" y="' + by + '" width="176" height="' + hh + '" rx="8"/><text class="ltt" x="' + (bx + 10) + '" y="' + (by + 17) + '">' + i + '년차 · 납입 ' + f0(cm.dep[i]) + '</text>';
+    SER.forEach(function(S, k){
+      h += '<circle cx="' + (bx + 14) + '" cy="' + (by + 34 + k * 17) + '" r="4" style="fill:var(--' + S.c + ')"/><text class="ltx" x="' + (bx + 24) + '" y="' + (by + 38 + k * 17) + '">' + S.n.replace(' · ', ' ').replace(' 납입', '') + ' ' + f0(cm.tots[S.id][i]) + '</text>';
+    });
+    svg.querySelector('#lbox').innerHTML = h;
+  }
+  var COLS = ['그해 납입', '누적 납입', '그해 수익', '누적 수익', '합계금액'];
+  function head(id, firstLabel){
+    $(id).innerHTML = '<tr><th rowspan="2" class="k">' + firstLabel + '</th><th colspan="5" class="g hA">기말 납입</th><th colspan="5" class="g hB gl">기초 납입</th><th colspan="5" class="g hD gl">차액 (기초 − 기말)</th></tr><tr>' +
+      ['sA', 'sB', 'sD'].map(function(c, gi){ return COLS.map(function(h, i){ return '<th class="' + c + (i === 0 && gi ? ' gl' : '') + '">' + h + '</th>'; }).join(''); }).join('') + '</tr>';
+  }
+  function cells(r, cls, gl){
+    return [r.dY, r.dC, r.gY, r.gC, r.t].map(function(v, i){ return '<td class="' + cls + (i === 0 && gl ? ' gl' : '') + '">' + f0(v) + '</td>'; }).join('');
+  }
+  function body(id, E, Bg){
+    $(id).innerHTML = E.map(function(e, i){
+      var b = Bg[i], d = {dY: b.dY - e.dY, dC: b.dC - e.dC, gY: b.gY - e.gY, gC: b.gC - e.gC, t: b.t - e.t};
+      var cls = (e.y === 1 && !e.ye ? 'mo' : '') + (e.ye && e.y === 2 && E[0] && !E[0].ye ? ' yr1' : '');
+      return '<tr class="' + cls + '"><td class="k">' + e.k + '</td>' + cells(e, 'cA', false) + cells(b, 'cB', true) + cells(d, 'cD', true) + '</tr>';
+    }).join('');
+  }
+  function render(){
+    var p = readInputs();
+    $('err').textContent = p.e; $('res').classList.toggle('dim', !!p.e);
+    if (p.e) return;
+    var s = simulate(p); state = {p: p, s: s};
+    var L = {}; SER.forEach(function(S){ var ys = yearsOf(s, S.id); L[S.id] = ys[ys.length - 1]; });
+    var dep = L.aE.dC;
+    $('yrs').textContent = p.C + '년';
+    $('stats').innerHTML = SER.map(function(S){
+      var t = L[S.id].t;
+      return '<div style="border-left-color:var(--' + S.c + ')"><span>' + S.n + '</span><b>' + f0(t) + '</b><small>수익 ' + f0(t - dep) + '</small></div>';
+    }).join('') + '<div><span>총 납입 원금</span><b>' + f0(dep) + '</b><small>모두 같음</small></div>';
+    $('insight').innerHTML = '월복리가 연복리보다 기말 납입에서 <b>' + f0(L.mE.t - L.aE.t) + '</b>, 기초 납입에서 <b>' + f0(L.mB.t - L.aB.t) + '</b> 더 큽니다. 같은 복리라도 기초에 넣으면 기말보다 연복리 <b>' + f0(L.aB.t - L.aE.t) + '</b>, 월복리 <b>' + f0(L.mB.t - L.mE.t) + '</b> 더 큽니다.';
+    chart(s, p);
+    $('legend').innerHTML = '<i style="background:var(--sub)"></i>누적 납입(점선)' + SER.map(function(S){ return '<i style="background:var(--' + S.c + ')"></i>' + S.n; }).join('') + '<br>눈금 간격은 연 8% 결과 기준으로 고정입니다.';
+    head('th1', '연차'); body('tb1', s.aE, s.aB);
+    head('th2', '구간');
+    var E = s.mE.months.concat(s.mE.years.slice(1)), Bg = s.mB.months.concat(s.mB.years.slice(1));
+    body('tb2', E, Bg);
+  }
+  ['a', 'b', 'c'].forEach(function(id){ $(id).addEventListener('input', render); });
+  $('a').addEventListener('input', function(e){
+    var el = e.target, d = el.value.replace(/\D/g, '').slice(0, 11), fromEnd = el.value.length - (el.selectionStart || 0);
+    el.value = d ? nf.format(+d) : '';
+    var pos = Math.max(0, el.value.length - fromEnd); try { el.setSelectionRange(pos, pos); } catch (x) {}
+  });
+  var chEl = $('chart');
+  chEl.addEventListener('pointermove', function(e){ if (e.pointerType !== 'touch') lensMove(e); });
+  chEl.addEventListener('pointerdown', function(e){ if (e.pointerType === 'touch') lensMove(e); });
+  chEl.addEventListener('pointerleave', function(e){ if (e.pointerType !== 'touch') lensHide(); });
+  $('zm').addEventListener('change', function(){ zoom = +$('zm').value; chEl.classList.toggle('zm', zoom > 0); lensHide(); });
+  var rz = null, lastW = 0;
+  window.addEventListener('resize', function(){ clearTimeout(rz); rz = setTimeout(function(){ var w = $('chart').clientWidth; if (state && w && Math.abs(w - lastW) > 8){ lastW = w; chart(state.s, state.p); } }, 150); });
+  render(); lastW = $('chart').clientWidth;
+})();
+</script>
+</body>
+</html>
