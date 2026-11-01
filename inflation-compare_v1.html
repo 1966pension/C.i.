@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>수익률별 명목·실질 수익 비교</title>
+<meta name="description" content="연 수익률 6·8·10%를 골라 명목 금액과 물가를 반영한 실질(지금 가치) 금액을 비교합니다.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="수익률별 명목·실질 수익 비교">
+<meta property="og:description" content="30년 뒤 내 돈은 지금 얼마의 가치일까? 물가를 반영한 실질 금액을 확인하세요.">
+<meta property="og:url" content="https://yunhwon.github.io/Retirement-planning/inflation-compare_v1.html">
+<style>
+:root{--c6:#8e44ad;--c8:#2457d6;--c10:#e07b00;--t6:#f1e6f7;--t8:#e6edfc;--t10:#fff0dc;--cn:#2457d6;--cr:#e07b00;--tA:#e6edfc;--tB:#fff0dc;--tD:#eceff3;--hA:#2457d6;--hB:#e07b00;--hD:#6b7585;
+--bg:#f4f6fa;--card:#fff;--ink:#1b2430;--sub:#667385;--line:#e1e6ee;--accent:#2457d6;--accent2:#e6edfc;--bad:#c0392b}
+@media (prefers-color-scheme:dark){:root{--c6:#c08ae0;--c8:#7aa2ff;--c10:#ffb454;--t6:#33213f;--t8:#1f2b46;--t10:#3a2a14;--cn:#7aa2ff;--cr:#ffb454;--tA:#1f2b46;--tB:#3a2a14;--tD:#272d37;--hA:#3b63c9;--hB:#b8631a;--hD:#58616f;
+--bg:#12161c;--card:#1b212a;--ink:#e8ecf2;--sub:#9aa5b5;--line:#2c3542;--accent:#7aa2ff;--accent2:#1f2b46;--bad:#ff8a7a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:4px 0 6px}
+h2{font-size:16px;margin:0 0 4px}
+.lead{margin:0 0 16px;color:var(--sub);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.grid{grid-template-columns:minmax(0,1fr)}}
+label{display:block;font-size:13px;color:var(--sub)}
+.inp{display:flex;align-items:center;margin-top:4px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:0 12px}
+.inp:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent2)}
+.inp input{flex:1;min-width:0;width:100%;border:0;background:transparent;color:var(--ink);font:inherit;font-size:18px;font-weight:600;padding:10px 0;outline:0;text-align:right}
+.inp em{font-style:normal;color:var(--sub);margin-left:6px;font-size:14px}
+select{width:100%;margin-top:4px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
+details{margin-top:12px;font-size:14px}
+summary{cursor:pointer;color:var(--accent)}
+.opts{display:grid;gap:10px;margin-top:10px}
+.err{color:var(--bad);font-size:13px;margin:10px 0 0}
+.err:empty{display:none}
+.dim{opacity:.35}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.two{grid-template-columns:minmax(0,1fr)}}
+.box{border:1px solid var(--line);border-top-width:5px;border-radius:12px;padding:12px 14px}
+.box.n{border-top-color:var(--cn)}.box.r{border-top-color:var(--cr)}
+.box .t{font-size:13px;color:var(--sub)}
+.box .v{font-size:clamp(24px,5.5vw,34px);font-weight:800;letter-spacing:-.5px;margin:2px 0 6px}
+.box.n .v{color:var(--cn)}.box.r .v{color:var(--cr)}
+.box dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13px}
+.box dt{color:var(--sub)}.box dd{margin:0;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.rate{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:14px}
+.rate div{border-left:4px solid var(--line);padding-left:10px}
+.rate span{display:block;font-size:12px;color:var(--sub)}
+.rate b{font-size:17px}
+.insight{font-size:13.5px;color:var(--sub);margin:12px 0 0}
+.insight b{color:var(--ink)}
+#chart svg{width:100%;height:auto;display:block}
+.axis{fill:var(--sub);font-size:11px}
+.grd{stroke:var(--line);stroke-width:1}
+.ln{fill:none;stroke-width:2.5;stroke-linejoin:round}
+.pr{fill:none;stroke:var(--sub);stroke-width:1.5;stroke-dasharray:5 4}
+.vlab{font-size:11px;font-weight:700;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+.vl{stroke:var(--sub);stroke-width:1;stroke-dasharray:3 3;opacity:0}
+.hv:hover .vl{opacity:1}
+.band{fill:transparent}
+.legend{font-size:13px;color:var(--sub);margin:4px 0 4px}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;margin:0 6px 3px 14px;vertical-align:middle}
+.legend i:first-child{margin-left:0}
+.tbl{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 9px;text-align:right;white-space:nowrap}
+th{position:sticky;top:0;color:var(--ink);font-weight:700;z-index:2}
+thead tr:nth-child(2) th{top:28px}
+th.g{text-align:center;color:#fff}
+th.hA{background:var(--hA)}th.hB{background:var(--hB)}th.hD{background:var(--hD)}th.hP{background:var(--accent2)}
+thead tr:nth-child(2) th.sA{background:var(--tA)}thead tr:nth-child(2) th.sB{background:var(--tB)}thead tr:nth-child(2) th.sD{background:var(--tD)}
+th.k,td.k{text-align:center;position:sticky;left:0;z-index:3;background:var(--card);min-width:56px}
+th.k{background:var(--accent2);z-index:4}
+td.cP{background:var(--card)}
+td.cA{background:var(--tA)}td.cB{background:var(--tB)}td.cD{background:var(--tD)}
+td.gl,th.gl{border-left:2px solid var(--sub)}
+tbody tr:nth-child(even) td:not(.k){filter:brightness(.97)}
+.note{font-size:12px;color:var(--sub);margin:6px 2px 0}
+.tog{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;align-items:center}
+.tog .lb{font-size:13px;color:var(--sub);margin-right:4px}
+.chip{border:2px solid var(--line);background:var(--bg);color:var(--sub);font:inherit;font-weight:700;font-size:15px;padding:7px 16px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{color:#fff;border-color:transparent}
+.chip[data-r="6"][aria-pressed="true"]{background:var(--c6)}
+.chip[data-r="8"][aria-pressed="true"]{background:var(--c8)}
+.chip[data-r="10"][aria-pressed="true"]{background:var(--c10)}
+@media (prefers-color-scheme:dark){.chip[aria-pressed="true"]{color:#0b1220}}
+.chip:focus-visible{outline:3px solid var(--accent2)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.box .rr{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:13px;color:var(--sub)}
+.box .rr b{color:var(--ink)}
+.rl{fill:none;stroke-width:3;stroke-linecap:round;stroke-dasharray:1 6}
+</style>
+</head>
+<body>
+<main class="wrap">
+<h1>수익률별 명목·실질 수익 비교</h1>
+<p class="lead">연 수익률 6·8·10%를 버튼으로 골라, 찍히는 금액(명목)과 물가를 반영해 지금 돈의 가치로 바꾼 금액(실질)을 비교합니다.</p>
+
+<section class="card">
+  <div class="grid">
+    <label for="a">매월 납입액<span class="inp"><input id="a" inputmode="numeric" autocomplete="off" value="500"></span></label>
+    <label for="c">납입 기간<span class="inp"><input id="c" inputmode="numeric" autocomplete="off" value="30"><em>년</em></span></label>
+    <label for="i">연평균 물가상승률<span class="inp"><input id="i" inputmode="decimal" autocomplete="off" value="3"><em>%</em></span></label>
+  </div>
+  <div class="tog" role="group" aria-label="비교할 연 수익률">
+    <span class="lb">연 수익률</span>
+    <button type="button" class="chip" data-r="6" aria-pressed="false">6%</button>
+    <button type="button" class="chip" data-r="8" aria-pressed="true">8%</button>
+    <button type="button" class="chip" data-r="10" aria-pressed="false">10%</button>
+  </div>
+  <details>
+    <summary>세부 설정</summary>
+    <div class="opts">
+      <label for="t">납입 시점
+        <select id="t"><option value="end">매월 말 (기본)</option><option value="begin">매월 초</option></select>
+      </label>
+      <label for="m">수익률 적용 방식
+        <select id="m"><option value="nominal">연 수익률 ÷ 12 를 매달 적용 (기본)</option><option value="eff">연 실효 (1년 뒤 증가율 = 입력값)</option></select>
+      </label>
+    </div>
+  </details>
+  <p id="err" class="err" role="alert"></p>
+</section>
+
+<section class="card" id="res" aria-live="polite">
+  <div class="lbl" style="font-size:13px;color:var(--sub)"><span id="yrs"></span> 후 · 물가 <span id="cpi"></span></div>
+  <div class="cards" id="cards" style="margin-top:8px"></div>
+  <p class="insight" id="insight"></p>
+  <div id="chart" style="margin-top:12px"></div>
+  <div class="legend" id="legend"></div>
+</section>
+
+<section class="card">
+  <h2>연도별 내역</h2>
+  <p class="lead" style="margin:0">명목 금액과, 같은 금액을 지금 돈의 가치로 바꾼 실질 금액</p>
+  <div class="tbl"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+  <p class="note">표를 좌우로 밀어서 더 볼 수 있어요. 위의 수익률 버튼으로 표에 넣을 수익률을 고를 수 있습니다. "물가 배수"는 그 해에 물건값이 지금의 몇 배가 되는지입니다. 실질 금액 = 명목 금액 ÷ 물가 배수이고, 실질 납입 원금은 매월 낸 돈을 그때 시점의 물가로 나눠 지금 가치로 바꾼 합계입니다.</p>
+</section>
+<section class="card">
+  <h2>이렇게 계산했어요</h2>
+  <p class="note" style="font-size:13.5px;margin:6px 0 0">① 명목 금액: 매월 납입액을 연 수익률로 불린 금액입니다. 다른 계산기와 같은 방식입니다.<br>
+  ② 실질 금액: 명목 금액 ÷ (1 + 물가상승률)<sup>경과 년수</sup>. 물가가 오른 만큼 같은 숫자로 살 수 있는 양이 줄어드는 것을 반영합니다.<br>
+  ③ 실질 수익률: (1 + 명목 수익률) ÷ (1 + 물가상승률) − 1. 8% − 3% = 5%가 아니라 약 4.85%입니다. 불어난 금액에도 물가가 적용되기 때문입니다.</p>
+</section>
+<p class="note">세전 기준이며 수수료·세금은 반영하지 않은 단순 시뮬레이션입니다. 수익률과 물가는 매년 달라지므로 결과는 참고용이며 투자 권유가 아닙니다.</p>
+</main>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var nf = new Intl.NumberFormat('ko-KR'), state = null;
+  function f0(x){ return nf.format(Math.round(x)); }
+  function num(s){ return parseFloat(String(s).replace(/[,\s원%년]/g, '')); }
+  var RATES = [6, 8, 10], on = {6: false, 8: true, 10: false};
+  function sel(){ return RATES.filter(function(r){ return on[r]; }); }
+  function readInputs(){
+    var A = num($('a').value), C = num($('c').value), I = num($('i').value), e = '';
+    if (!isFinite(A) || A <= 0) e = '매월 납입액을 0보다 큰 값으로 입력해 주세요.';
+    else if (A > 1e10) e = '매월 납입액이 너무 큽니다.';
+    else if (!isFinite(C) || C < 1 || C > 60 || Math.floor(C) !== C) e = '납입 기간은 1~60년 사이의 정수로 입력해 주세요.';
+    else if (!isFinite(I) || I < 0 || I > 50) e = '물가상승률은 0~50% 사이로 입력해 주세요.';
+    return {A: A, C: C, I: I / 100, e: e, timing: $('t').value, mode: $('m').value};
+  }
+  function rOf(p, B){ return p.mode === 'nominal' ? B / 12 : Math.pow(1 + B, 1 / 12) - 1; }
+  function simulate(p, B){
+    var r = rOf(p, B), bal = 0, dep = 0, rdep = 0, rows = [{y: 0, cpi: 1, dep: 0, tot: 0, rdep: 0, rtot: 0}];
+    for (var m = 1; m <= p.C * 12; m++){
+      var it = (p.timing === 'begin' ? bal + p.A : bal) * r;
+      bal = bal + p.A + it; dep += p.A;
+      rdep += p.A / Math.pow(1 + p.I, (p.timing === 'begin' ? m - 1 : m) / 12);
+      if (m % 12 === 0){ var y = m / 12, cpi = Math.pow(1 + p.I, y); rows.push({y: y, cpi: cpi, dep: dep, tot: bal, rdep: rdep, rtot: bal / cpi}); }
+    }
+    return rows;
+  }
+  function chart(sim, p){
+    var S = sel(), el = $('chart'), W = Math.max(300, Math.round(el.clientWidth || 700)), pl = 70, pr = 16, pt = 18, pb = 30, UNIT = 83, n = p.C, iw = W - pl - pr;
+    var raw = Math.max.apply(null, [8].concat(S).map(function(R){ return (R === 8 && !on[8] ? simulate(p, 0.08) : sim[R])[n].tot; })) || 1;
+    var base = simulate({A: p.A, C: p.C, I: p.I, timing: 'end', mode: 'nominal'}, 0.08), raw8 = base[n].tot || 1;
+    var mag = Math.pow(10, Math.floor(Math.log10(raw8 / 4))), f = raw8 / 4 / mag, stepN = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
+    var kN = Math.max(1, Math.ceil(raw / stepN - 1e-9)), max = stepN * kN, ih = UNIT * kN, H = pt + pb + ih;
+    function X(y){ return pl + iw * y / n; }
+    function Y(v){ return pt + ih * (1 - v / max); }
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="수익률별 명목 금액과 실질 금액 선그래프">';
+    for (var g = 0; g <= kN; g++){
+      var yy = Y(stepN * g).toFixed(1);
+      s += '<line class="grd" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + yy + '" y2="' + yy + '"/><text class="axis" text-anchor="end" x="' + (pl - 6) + '" y="' + (+yy + 4) + '">' + f0(stepN * g) + '</text>';
+    }
+    var stp = Math.ceil(n / Math.max(3, Math.floor(iw / 60)));
+    for (var y = 0; y <= n; y++) if (y % stp === 0 || y === n) s += '<text class="axis" text-anchor="middle" x="' + X(y).toFixed(1) + '" y="' + (H - 8) + '">' + y + '년</text>';
+    function path(rows, key){ return rows.map(function(r, i){ return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(r[key]).toFixed(1); }).join(''); }
+    var first = sim[S[0]];
+    s += '<path class="pr" d="' + path(first, 'dep') + '"/>';
+    S.forEach(function(R){
+      s += '<path class="ln" style="stroke:var(--c' + R + ')" d="' + path(sim[R], 'tot') + '"/><path class="rl" style="stroke:var(--c' + R + ')" d="' + path(sim[R], 'rtot') + '"/>';
+    });
+    var bw = iw / n;
+    for (var i = 0; i <= n; i++){
+      var tip = i + '년차 (물가 ' + first[i].cpi.toFixed(2) + '배)\n누적 납입 ' + f0(first[i].dep) + S.map(function(R){ return '\n연 ' + R + '%  명목 ' + f0(sim[R][i].tot) + ' / 실질 ' + f0(sim[R][i].rtot); }).join('');
+      s += '<g class="hv"><title>' + tip + '</title><line class="vl" x1="' + X(i).toFixed(1) + '" x2="' + X(i).toFixed(1) + '" y1="' + pt + '" y2="' + (H - pb) + '"/><rect class="band" x="' + (X(i) - bw / 2).toFixed(1) + '" y="' + pt + '" width="' + bw.toFixed(1) + '" height="' + ih + '"/></g>';
+    }
+    var lab = [];
+    S.forEach(function(R){ var L = sim[R][n]; lab.push({R: R, k: '명목', v: L.tot, y: Y(L.tot)}); lab.push({R: R, k: '실질', v: L.rtot, y: Y(L.rtot)}); });
+    lab.sort(function(a, b){ return a.y - b.y; });
+    for (var k = 1; k < lab.length; k++) lab[k].ly = Math.max(lab[k].y, (lab[k - 1].ly !== undefined ? lab[k - 1].ly : lab[k - 1].y) + 13);
+    lab.forEach(function(o){
+      s += '<circle cx="' + X(n).toFixed(1) + '" cy="' + o.y.toFixed(1) + '" r="3" style="fill:var(--c' + o.R + ')"/><text class="vlab" text-anchor="end" style="fill:var(--c' + o.R + ')" x="' + (X(n) - 8).toFixed(1) + '" y="' + ((o.ly !== undefined ? o.ly : o.y) - 5).toFixed(1) + '">' + o.R + '% ' + o.k + ' ' + f0(o.v) + '</text>';
+    });
+    el.innerHTML = s + '</svg>';
+  }
+  function render(){
+    var p = readInputs();
+    $('err').textContent = p.e; $('res').classList.toggle('dim', !!p.e);
+    if (p.e) return;
+    var S = sel(), sim = {};
+    RATES.forEach(function(R){ sim[R] = simulate(p, R / 100); });
+    state = {p: p, sim: sim};
+    var cpi = sim[S[0]][p.C].cpi;
+    $('yrs').textContent = p.C + '년'; $('cpi').textContent = (p.I * 100).toFixed(1).replace('.0', '') + '% → ' + cpi.toFixed(2) + '배';
+    $('cards').innerHTML = S.map(function(R){
+      var L = sim[R][p.C], realR = (1.0 * (1 + R / 100)) / (1 + p.I) - 1;
+      return '<div class="box" style="border-top-color:var(--c' + R + ')"><div class="t">연 ' + R + '%</div>' +
+        '<div class="v" style="color:var(--c' + R + ');font-size:clamp(20px,4.6vw,26px)">명목 ' + f0(L.tot) + '</div>' +
+        '<div class="v" style="color:var(--c' + R + ');font-size:clamp(20px,4.6vw,26px);margin-top:-4px">실질 ' + f0(L.rtot) + '</div>' +
+        '<dl><dt>납입 원금</dt><dd>' + f0(L.dep) + ' → 지금 가치 ' + f0(L.rdep) + '</dd><dt>수익</dt><dd>명목 ' + f0(L.tot - L.dep) + ' / 실질 ' + f0(L.rtot - L.rdep) + '</dd></dl>' +
+        '<div class="rr">실질 수익률 (1+' + R + '%)÷(1+' + (p.I * 100).toFixed(1).replace('.0', '') + '%)−1 = <b>' + (realR * 100).toFixed(2) + '%</b></div></div>';
+    }).join('');
+    var tops = S.map(function(R){ var L = sim[R][p.C]; return '연 ' + R + '%는 명목 ' + f0(L.tot) + '이 지금 돈으로 <b>' + f0(L.rtot) + '</b>(' + (L.tot ? L.rtot / L.tot * 100 : 0).toFixed(1) + '%)'; });
+    $('insight').innerHTML = '물가가 ' + cpi.toFixed(2) + '배가 되므로 어떤 수익률이든 찍힌 숫자의 <b>' + (100 / cpi).toFixed(1) + '%</b>만 지금 가치로 남습니다. ' + tops.join(', ') + '입니다.';
+    chart(sim, p);
+    $('legend').innerHTML = '<i style="background:var(--sub)"></i>누적 납입(점선)' + S.map(function(R){ return '<i style="background:var(--c' + R + ')"></i>연 ' + R + '% 명목(실선) · 실질(점)'; }).join('') + '<br>눈금 간격은 연 8% 결과 기준으로 고정입니다. 선 위에 커서를 올리면 그해 금액이 보입니다.';
+    var first = sim[S[0]];
+    var h1 = '<tr><th rowspan="2" class="k">연차</th><th rowspan="2" class="g hP gl" style="color:var(--ink)">물가 배수</th><th colspan="2" class="g hD gl">납입 원금</th>', h2 = '<tr><th class="sD gl">명목</th><th class="sD">지금 가치</th>';
+    S.forEach(function(R){
+      h1 += '<th colspan="4" class="g gl" style="background:var(--c' + R + ')">연 ' + R + '%</th>';
+      ['명목 수익', '명목 합계', '실질 수익', '실질 합계'].forEach(function(c, i){ h2 += '<th class="' + (i === 0 ? 'gl' : '') + '" style="background:var(--t' + R + ')">' + c + '</th>'; });
+    });
+    $('th').innerHTML = h1 + '</tr>' + h2 + '</tr>';
+    var out = '';
+    for (var y = 1; y <= p.C; y++){
+      var b = first[y];
+      out += '<tr><td class="k">' + y + '년</td><td class="cP gl">' + b.cpi.toFixed(2) + '배</td><td class="cD gl">' + f0(b.dep) + '</td><td class="cD">' + f0(b.rdep) + '</td>';
+      S.forEach(function(R){
+        var r = sim[R][y], st = 'style="background:var(--t' + R + ')"';
+        out += '<td class="gl" ' + st + '>' + f0(r.tot - r.dep) + '</td><td ' + st + '>' + f0(r.tot) + '</td><td ' + st + '>' + f0(r.rtot - r.rdep) + '</td><td ' + st + '>' + f0(r.rtot) + '</td>';
+      });
+      out += '</tr>';
+    }
+    $('tb').innerHTML = out;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.chip'), function(b){
+    b.addEventListener('click', function(){
+      var r = +b.getAttribute('data-r');
+      if (on[r] && sel().length === 1) return;
+      on[r] = !on[r]; b.setAttribute('aria-pressed', on[r] ? 'true' : 'false'); render();
+    });
+  });
+  ['a', 'c', 'i'].forEach(function(id){ $(id).addEventListener('input', render); });
+  ['t', 'm'].forEach(function(id){ $(id).addEventListener('change', render); });
+  $('a').addEventListener('input', function(e){
+    var el = e.target, d = el.value.replace(/\D/g, '').slice(0, 11), fromEnd = el.value.length - (el.selectionStart || 0);
+    el.value = d ? nf.format(+d) : '';
+    var pos = Math.max(0, el.value.length - fromEnd); try { el.setSelectionRange(pos, pos); } catch (x) {}
+  });
+  var rz = null, lastW = 0;
+  window.addEventListener('resize', function(){ clearTimeout(rz); rz = setTimeout(function(){ var w = $('chart').clientWidth; if (state && w && Math.abs(w - lastW) > 8){ lastW = w; chart(state.sim, state.p); } }, 150); });
+  render(); lastW = $('chart').clientWidth;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>명목 수익과 실질 수익 계산기</title>
+<meta name="description" content="매월 납입액·연 수익률·기간·물가상승률을 넣으면 명목 금액과 물가를 뺀 실질(현재 가치) 금액을 비교해 줍니다.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="명목 수익과 실질 수익 계산기">
+<meta property="og:description" content="30년 뒤 내 돈은 지금 얼마의 가치일까? 물가를 반영한 실질 금액을 확인하세요.">
+<meta property="og:url" content="https://yunhwon.github.io/Retirement-planning/inflation-real_v1.html">
+<style>
+:root{--cn:#2457d6;--cr:#e07b00;--tA:#e6edfc;--tB:#fff0dc;--tD:#eceff3;--hA:#2457d6;--hB:#e07b00;--hD:#6b7585;
+--bg:#f4f6fa;--card:#fff;--ink:#1b2430;--sub:#667385;--line:#e1e6ee;--accent:#2457d6;--accent2:#e6edfc;--bad:#c0392b}
+@media (prefers-color-scheme:dark){:root{--cn:#7aa2ff;--cr:#ffb454;--tA:#1f2b46;--tB:#3a2a14;--tD:#272d37;--hA:#3b63c9;--hB:#b8631a;--hD:#58616f;
+--bg:#12161c;--card:#1b212a;--ink:#e8ecf2;--sub:#9aa5b5;--line:#2c3542;--accent:#7aa2ff;--accent2:#1f2b46;--bad:#ff8a7a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:4px 0 6px}
+h2{font-size:16px;margin:0 0 4px}
+.lead{margin:0 0 16px;color:var(--sub);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+label{display:block;font-size:13px;color:var(--sub)}
+.inp{display:flex;align-items:center;margin-top:4px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:0 12px}
+.inp:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent2)}
+.inp input{flex:1;min-width:0;width:100%;border:0;background:transparent;color:var(--ink);font:inherit;font-size:18px;font-weight:600;padding:10px 0;outline:0;text-align:right}
+.inp em{font-style:normal;color:var(--sub);margin-left:6px;font-size:14px}
+select{width:100%;margin-top:4px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
+details{margin-top:12px;font-size:14px}
+summary{cursor:pointer;color:var(--accent)}
+.opts{display:grid;gap:10px;margin-top:10px}
+.err{color:var(--bad);font-size:13px;margin:10px 0 0}
+.err:empty{display:none}
+.dim{opacity:.35}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.two{grid-template-columns:minmax(0,1fr)}}
+.box{border:1px solid var(--line);border-top-width:5px;border-radius:12px;padding:12px 14px}
+.box.n{border-top-color:var(--cn)}.box.r{border-top-color:var(--cr)}
+.box .t{font-size:13px;color:var(--sub)}
+.box .v{font-size:clamp(24px,5.5vw,34px);font-weight:800;letter-spacing:-.5px;margin:2px 0 6px}
+.box.n .v{color:var(--cn)}.box.r .v{color:var(--cr)}
+.box dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13px}
+.box dt{color:var(--sub)}.box dd{margin:0;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.rate{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:14px}
+.rate div{border-left:4px solid var(--line);padding-left:10px}
+.rate span{display:block;font-size:12px;color:var(--sub)}
+.rate b{font-size:17px}
+.insight{font-size:13.5px;color:var(--sub);margin:12px 0 0}
+.insight b{color:var(--ink)}
+#chart svg{width:100%;height:auto;display:block}
+.axis{fill:var(--sub);font-size:11px}
+.grd{stroke:var(--line);stroke-width:1}
+.ln{fill:none;stroke-width:2.5;stroke-linejoin:round}
+.pr{fill:none;stroke:var(--sub);stroke-width:1.5;stroke-dasharray:5 4}
+.vlab{font-size:11px;font-weight:700;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+.vl{stroke:var(--sub);stroke-width:1;stroke-dasharray:3 3;opacity:0}
+.hv:hover .vl{opacity:1}
+.band{fill:transparent}
+.legend{font-size:13px;color:var(--sub);margin:4px 0 4px}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;margin:0 6px 3px 14px;vertical-align:middle}
+.legend i:first-child{margin-left:0}
+.tbl{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 9px;text-align:right;white-space:nowrap}
+th{position:sticky;top:0;color:var(--ink);font-weight:700;z-index:2}
+thead tr:nth-child(2) th{top:28px}
+th.g{text-align:center;color:#fff}
+th.hA{background:var(--hA)}th.hB{background:var(--hB)}th.hD{background:var(--hD)}th.hP{background:var(--accent2)}
+thead tr:nth-child(2) th.sA{background:var(--tA)}thead tr:nth-child(2) th.sB{background:var(--tB)}thead tr:nth-child(2) th.sD{background:var(--tD)}
+th.k,td.k{text-align:center;position:sticky;left:0;z-index:3;background:var(--card);min-width:56px}
+th.k{background:var(--accent2);z-index:4}
+td.cP{background:var(--card)}
+td.cA{background:var(--tA)}td.cB{background:var(--tB)}td.cD{background:var(--tD)}
+td.gl,th.gl{border-left:2px solid var(--sub)}
+tbody tr:nth-child(even) td:not(.k){filter:brightness(.97)}
+.note{font-size:12px;color:var(--sub);margin:6px 2px 0}
+</style>
+</head>
+<body>
+<main class="wrap">
+<h1>명목 수익과 실질 수익</h1>
+<p class="lead">숫자로 찍히는 금액(명목)과, 물가 상승을 반영해 지금 돈의 가치로 바꾼 금액(실질)을 나란히 보여 줍니다.</p>
+
+<section class="card">
+  <div class="grid">
+    <label for="a">매월 납입액<span class="inp"><input id="a" inputmode="numeric" autocomplete="off" value="500"></span></label>
+    <label for="b">연 수익률<span class="inp"><input id="b" inputmode="decimal" autocomplete="off" value="8"><em>%</em></span></label>
+    <label for="c">납입 기간<span class="inp"><input id="c" inputmode="numeric" autocomplete="off" value="30"><em>년</em></span></label>
+    <label for="i">연평균 물가상승률<span class="inp"><input id="i" inputmode="decimal" autocomplete="off" value="3"><em>%</em></span></label>
+  </div>
+  <details>
+    <summary>세부 설정</summary>
+    <div class="opts">
+      <label for="t">납입 시점
+        <select id="t"><option value="end">매월 말 (기본)</option><option value="begin">매월 초</option></select>
+      </label>
+      <label for="m">수익률 적용 방식
+        <select id="m"><option value="nominal">연 수익률 ÷ 12 를 매달 적용 (기본)</option><option value="eff">연 실효 (1년 뒤 증가율 = 입력값)</option></select>
+      </label>
+    </div>
+  </details>
+  <p id="err" class="err" role="alert"></p>
+</section>
+
+<section class="card" id="res" aria-live="polite">
+  <div class="two">
+    <div class="box n">
+      <div class="t"><span class="yr"></span> 후 명목 금액 (찍히는 숫자)</div>
+      <div class="v" id="nfin">-</div>
+      <dl><dt>총 납입 원금</dt><dd id="ndep">-</dd><dt>명목 수익</dt><dd id="ngain">-</dd></dl>
+    </div>
+    <div class="box r">
+      <div class="t"><span class="yr"></span> 후 실질 금액 (지금 돈의 가치)</div>
+      <div class="v" id="rfin">-</div>
+      <dl><dt>납입 원금(지금 가치)</dt><dd id="rdep">-</dd><dt>실질 수익</dt><dd id="rgain">-</dd></dl>
+    </div>
+  </div>
+  <div class="rate" id="rate"></div>
+  <p class="insight" id="insight"></p>
+  <div id="chart" style="margin-top:12px"></div>
+  <div class="legend" id="legend"></div>
+</section>
+
+<section class="card">
+  <h2>연도별 내역</h2>
+  <p class="lead" style="margin:0">명목 금액과, 같은 금액을 지금 돈의 가치로 바꾼 실질 금액</p>
+  <div class="tbl"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+  <p class="note">표를 좌우로 밀어서 더 볼 수 있어요. "물가 배수"는 그 해에 물건값이 지금의 몇 배가 되는지입니다. 실질 금액 = 명목 금액 ÷ 물가 배수이고, 실질 납입 원금은 매월 낸 돈을 그때 시점의 물가로 나눠 지금 가치로 바꾼 합계입니다.</p>
+</section>
+<section class="card">
+  <h2>이렇게 계산했어요</h2>
+  <p class="note" style="font-size:13.5px;margin:6px 0 0">① 명목 금액: 매월 납입액을 연 수익률로 불린 금액입니다. 다른 계산기와 같은 방식입니다.<br>
+  ② 실질 금액: 명목 금액 ÷ (1 + 물가상승률)<sup>경과 년수</sup>. 물가가 오른 만큼 같은 숫자로 살 수 있는 양이 줄어드는 것을 반영합니다.<br>
+  ③ 실질 수익률: (1 + 명목 수익률) ÷ (1 + 물가상승률) − 1. 8% − 3% = 5%가 아니라 약 4.85%입니다. 불어난 금액에도 물가가 적용되기 때문입니다.</p>
+</section>
+<p class="note">세전 기준이며 수수료·세금은 반영하지 않은 단순 시뮬레이션입니다. 수익률과 물가는 매년 달라지므로 결과는 참고용이며 투자 권유가 아닙니다.</p>
+</main>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var nf = new Intl.NumberFormat('ko-KR'), state = null;
+  function f0(x){ return nf.format(Math.round(x)); }
+  function num(s){ return parseFloat(String(s).replace(/[,\s원%년]/g, '')); }
+  function readInputs(){
+    var A = num($('a').value), B = num($('b').value), C = num($('c').value), I = num($('i').value), e = '';
+    if (!isFinite(A) || A <= 0) e = '매월 납입액을 0보다 큰 값으로 입력해 주세요.';
+    else if (A > 1e10) e = '매월 납입액이 너무 큽니다.';
+    else if (!isFinite(B) || B < 0 || B > 100) e = '연 수익률은 0~100% 사이로 입력해 주세요.';
+    else if (!isFinite(C) || C < 1 || C > 60 || Math.floor(C) !== C) e = '납입 기간은 1~60년 사이의 정수로 입력해 주세요.';
+    else if (!isFinite(I) || I < 0 || I > 50) e = '물가상승률은 0~50% 사이로 입력해 주세요.';
+    return {A: A, B: B / 100, C: C, I: I / 100, e: e, timing: $('t').value, mode: $('m').value};
+  }
+  function rOf(p, B){ return p.mode === 'nominal' ? B / 12 : Math.pow(1 + B, 1 / 12) - 1; }
+  /* 월별 시뮬레이션 → 연도별 기록 (명목·실질) */
+  function simulate(p, B){
+    var r = rOf(p, B), bal = 0, dep = 0, rdep = 0, rows = [{y: 0, cpi: 1, dep: 0, tot: 0, rdep: 0, rtot: 0}];
+    for (var m = 1; m <= p.C * 12; m++){
+      var it = (p.timing === 'begin' ? bal + p.A : bal) * r;
+      bal = bal + p.A + it; dep += p.A;
+      var tm = p.timing === 'begin' ? m - 1 : m;
+      rdep += p.A / Math.pow(1 + p.I, tm / 12);
+      if (m % 12 === 0){
+        var y = m / 12, cpi = Math.pow(1 + p.I, y);
+        rows.push({y: y, cpi: cpi, dep: dep, tot: bal, rdep: rdep, rtot: bal / cpi});
+      }
+    }
+    return rows;
+  }
+  function chart(rows, p){
+    var el = $('chart'), W = Math.max(300, Math.round(el.clientWidth || 700)), pl = 70, pr = 16, pt = 18, pb = 30, UNIT = 83, n = p.C, iw = W - pl - pr;
+    var raw = rows[n].tot || 1;
+    var base = simulate({A: p.A, C: p.C, I: p.I, timing: 'end', mode: 'nominal'}, 0.08), raw8 = base[n].tot || 1;
+    var mag = Math.pow(10, Math.floor(Math.log10(raw8 / 4))), f = raw8 / 4 / mag, stepN = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
+    var kN = Math.max(1, Math.ceil(raw / stepN - 1e-9)), max = stepN * kN, ih = UNIT * kN, H = pt + pb + ih;
+    function X(y){ return pl + iw * y / n; }
+    function Y(v){ return pt + ih * (1 - v / max); }
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="명목 금액과 실질 금액 선그래프">';
+    for (var g = 0; g <= kN; g++){
+      var yy = Y(stepN * g).toFixed(1);
+      s += '<line class="grd" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + yy + '" y2="' + yy + '"/><text class="axis" text-anchor="end" x="' + (pl - 6) + '" y="' + (+yy + 4) + '">' + f0(stepN * g) + '</text>';
+    }
+    var stp = Math.ceil(n / Math.max(3, Math.floor(iw / 60)));
+    for (var y = 0; y <= n; y++) if (y % stp === 0 || y === n) s += '<text class="axis" text-anchor="middle" x="' + X(y).toFixed(1) + '" y="' + (H - 8) + '">' + y + '년</text>';
+    function path(key){ return rows.map(function(r, i){ return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(r[key]).toFixed(1); }).join(''); }
+    s += '<path class="pr" d="' + path('dep') + '"/>';
+    s += '<path class="ln" style="stroke:var(--cn)" d="' + path('tot') + '"/><path class="ln" style="stroke:var(--cr)" d="' + path('rtot') + '"/>';
+    var bw = iw / n;
+    rows.forEach(function(r){
+      var tip = r.y + '년차 (물가 ' + r.cpi.toFixed(2) + '배)\n누적 납입 ' + f0(r.dep) + '\n명목 합계 ' + f0(r.tot) + '\n실질 합계 ' + f0(r.rtot);
+      s += '<g class="hv"><title>' + tip + '</title><line class="vl" x1="' + X(r.y).toFixed(1) + '" x2="' + X(r.y).toFixed(1) + '" y1="' + pt + '" y2="' + (H - pb) + '"/><rect class="band" x="' + (X(r.y) - bw / 2).toFixed(1) + '" y="' + pt + '" width="' + bw.toFixed(1) + '" height="' + ih + '"/></g>';
+    });
+    var L = rows[n], yN = Y(L.tot), yR = Y(L.rtot), yD = Y(L.dep);
+    s += '<circle cx="' + X(n).toFixed(1) + '" cy="' + yN.toFixed(1) + '" r="3.5" style="fill:var(--cn)"/><text class="vlab" text-anchor="end" style="fill:var(--cn)" x="' + (X(n) - 8).toFixed(1) + '" y="' + (yN - 6).toFixed(1) + '">명목 ' + f0(L.tot) + '</text>';
+    s += '<circle cx="' + X(n).toFixed(1) + '" cy="' + yR.toFixed(1) + '" r="3.5" style="fill:var(--cr)"/><text class="vlab" text-anchor="end" style="fill:var(--cr)" x="' + (X(n) - 8).toFixed(1) + '" y="' + (yR - 8).toFixed(1) + '">실질 ' + f0(L.rtot) + '</text>';
+    el.innerHTML = s + '</svg>';
+  }
+  function render(){
+    var p = readInputs();
+    $('err').textContent = p.e; $('res').classList.toggle('dim', !!p.e);
+    if (p.e) return;
+    var rows = simulate(p, p.B), L = rows[p.C];
+    state = {p: p, rows: rows};
+    Array.prototype.forEach.call(document.querySelectorAll('.yr'), function(e){ e.textContent = p.C + '년'; });
+    $('nfin').textContent = f0(L.tot); $('ndep').textContent = f0(L.dep); $('ngain').textContent = f0(L.tot - L.dep);
+    $('rfin').textContent = f0(L.rtot); $('rdep').textContent = f0(L.rdep); $('rgain').textContent = f0(L.rtot - L.rdep);
+    var realR = (1 + p.B) / (1 + p.I) - 1, effB = p.mode === 'nominal' ? Math.pow(1 + p.B / 12, 12) - 1 : p.B, effReal = (1 + effB) / (1 + p.I) - 1;
+    var h = '<div style="border-left-color:var(--cn)"><span>명목 수익률 (연)</span><b>' + (p.B * 100).toFixed(2) + '%</b></div>' +
+      '<div style="border-left-color:var(--cr)"><span>실질 수익률 (연) = (1+명목)÷(1+물가)−1</span><b>' + (realR * 100).toFixed(2) + '%</b></div>';
+    if (p.mode === 'nominal' && p.B > 0) h += '<div><span>월복리 실제 연 효과 기준</span><b>명목 ' + (effB * 100).toFixed(2) + '% → 실질 ' + (effReal * 100).toFixed(2) + '%</b></div>';
+    $('rate').innerHTML = h;
+    var keep = L.tot ? L.rtot / L.tot * 100 : 0, mon = p.A / L.cpi;
+    $('insight').innerHTML = p.C + '년 뒤의 명목 <b>' + f0(L.tot) + '</b>은 지금 돈으로 <b>' + f0(L.rtot) + '</b>의 가치, 즉 찍힌 숫자의 <b>' + keep.toFixed(1) + '%</b>입니다 (물가 <b>' + L.cpi.toFixed(2) + '배</b>). 같은 이유로 ' + p.C + '년 뒤에 내는 월 ' + f0(p.A) + '은 지금 돈으로 약 <b>' + f0(mon) + '</b>의 값어치입니다.';
+    chart(rows, p);
+    $('legend').innerHTML = '<i style="background:var(--sub)"></i>누적 납입(점선)<i style="background:var(--cn)"></i>명목 합계<i style="background:var(--cr)"></i>실질 합계(지금 가치)<br>눈금 간격은 연 8% 결과 기준으로 고정입니다.';
+    var cols = ['누적 납입', '누적 수익', '합계금액'];
+    $('th').innerHTML = '<tr><th rowspan="2" class="k">연차</th><th rowspan="2" class="g hP gl" style="color:var(--ink)">물가 배수</th><th colspan="3" class="g hA gl">명목</th><th colspan="3" class="g hB gl">실질 (지금 가치)</th><th class="g hD gl">차이</th></tr><tr>' +
+      cols.map(function(c, i){ return '<th class="sA' + (i === 0 ? ' gl' : '') + '">' + c + '</th>'; }).join('') + cols.map(function(c, i){ return '<th class="sB' + (i === 0 ? ' gl' : '') + '">' + c + '</th>'; }).join('') + '<th class="sD gl">명목 − 실질</th></tr>';
+    $('tb').innerHTML = rows.slice(1).map(function(r){
+      return '<tr><td class="k">' + r.y + '년</td><td class="cP gl">' + r.cpi.toFixed(2) + '배</td>' +
+        '<td class="cA gl">' + f0(r.dep) + '</td><td class="cA">' + f0(r.tot - r.dep) + '</td><td class="cA">' + f0(r.tot) + '</td>' +
+        '<td class="cB gl">' + f0(r.rdep) + '</td><td class="cB">' + f0(r.rtot - r.rdep) + '</td><td class="cB">' + f0(r.rtot) + '</td>' +
+        '<td class="cD gl">' + f0(r.tot - r.rtot) + '</td></tr>';
+    }).join('');
+  }
+  ['a', 'b', 'c', 'i'].forEach(function(id){ $(id).addEventListener('input', render); });
+  ['t', 'm'].forEach(function(id){ $(id).addEventListener('change', render); });
+  $('a').addEventListener('input', function(e){
+    var el = e.target, d = el.value.replace(/\D/g, '').slice(0, 11), fromEnd = el.value.length - (el.selectionStart || 0);
+    el.value = d ? nf.format(+d) : '';
+    var pos = Math.max(0, el.value.length - fromEnd); try { el.setSelectionRange(pos, pos); } catch (x) {}
+  });
+  var rz = null, lastW = 0;
+  window.addEventListener('resize', function(){ clearTimeout(rz); rz = setTimeout(function(){ var w = $('chart').clientWidth; if (state && w && Math.abs(w - lastW) > 8){ lastW = w; chart(state.rows, state.p); } }, 150); });
+  render(); lastW = $('chart').clientWidth;
+})();
+</script>
+</body>
+</html>
