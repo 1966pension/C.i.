@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>목표금액 역산 계산기 (물가 반영)</title>
+<meta name="description" content="지금 가치로 목표금액을 정하면, 물가 상승을 반영한 실제 필요 목표금액과 매월 납입해야 할 금액을 계산합니다.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="목표금액 역산 계산기 (물가 반영)">
+<meta property="og:description" content="지금 가치 목표금액을 정하면 물가를 반영한 필요 금액과 월 납입금을 알려 줍니다.">
+<meta property="og:url" content="https://yunhwon.github.io/Retirement-planning/goal-planner_v6.html">
+<style>
+:root{--cn:#2457d6;--cr:#e07b00;--cg:#1a8f5b;--tA:#e6edfc;--tB:#fff0dc;--tG:#e3f4ec;--tD:#eceff3;
+--bg:#f4f6fa;--card:#fff;--ink:#1b2430;--sub:#667385;--line:#e1e6ee;--accent:#2457d6;--accent2:#e6edfc;--bad:#c0392b;--btntxt:#fff}
+@media (prefers-color-scheme:dark){:root{--cn:#7aa2ff;--cr:#ffb454;--cg:#4fd19a;--tA:#1f2b46;--tB:#3a2a14;--tG:#17382a;--tD:#272d37;
+--bg:#12161c;--card:#1b212a;--ink:#e8ecf2;--sub:#9aa5b5;--line:#2c3542;--accent:#7aa2ff;--accent2:#1f2b46;--bad:#ff8a7a;--btntxt:#0b1220}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:4px 0 6px}
+h2{font-size:16px;margin:0 0 4px}
+.lead{margin:0 0 16px;color:var(--sub);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+label{display:block;font-size:13px;color:var(--sub)}
+.inp{display:flex;align-items:center;margin-top:4px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:0 12px}
+.inp:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent2)}
+.inp input{flex:1;min-width:0;width:100%;border:0;background:transparent;color:var(--ink);font:inherit;font-size:18px;font-weight:600;padding:10px 0;outline:0;text-align:right}
+.inp em{font-style:normal;color:var(--sub);margin-left:6px;font-size:14px}
+select{width:100%;margin-top:4px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
+details{margin-top:12px;font-size:14px}
+summary{cursor:pointer;color:var(--accent)}
+.opts{display:grid;gap:10px;margin-top:10px}
+.err{color:var(--bad);font-size:13px;margin:10px 0 0}
+.err:empty{display:none}
+.dim{opacity:.35}
+.hint{font-size:12px;color:var(--sub);margin:8px 0 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.box{border:1px solid var(--line);border-top-width:5px;border-radius:12px;padding:12px 14px}
+.box .t{font-size:13px;color:var(--sub)}
+.box .v{font-size:clamp(24px,5.5vw,32px);font-weight:800;letter-spacing:-.5px;margin:2px 0 6px}
+.box .s{font-size:13px;color:var(--sub)}
+.box .s b{color:var(--ink)}
+.insight{font-size:13.5px;color:var(--sub);margin:12px 0 0}
+.insight b{color:var(--ink)}
+.warn{border-left:4px solid var(--cr);background:var(--tB);border-radius:8px;padding:10px 12px;margin-top:12px;font-size:13.5px}
+#chart svg{width:100%;height:auto;display:block}
+.axis{fill:var(--sub);font-size:11px}
+.grd{stroke:var(--line);stroke-width:1}
+.ln{fill:none;stroke-width:2.5;stroke-linejoin:round}
+.pr{fill:none;stroke:var(--sub);stroke-width:1.5;stroke-dasharray:5 4}
+.rl{fill:none;stroke-width:3;stroke-linecap:round;stroke-dasharray:1 6}
+.tg{fill:none;stroke:var(--cg);stroke-width:1.5;stroke-dasharray:8 4}
+.vlab{font-size:11px;font-weight:700;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+.vl{stroke:var(--sub);stroke-width:1;stroke-dasharray:3 3;opacity:0}
+.hv:hover .vl{opacity:1}
+.band{fill:transparent}
+.legend{font-size:13px;color:var(--sub);margin:4px 0 4px}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;margin:0 6px 3px 14px;vertical-align:middle}
+.legend i:first-child{margin-left:0}
+.tbl{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 9px;text-align:right;white-space:nowrap}
+th{position:sticky;top:0;background:var(--accent2);color:var(--ink);font-weight:700;z-index:2}
+th.k,td.k{text-align:center;position:sticky;left:0;z-index:3;background:var(--card);min-width:56px}
+th.k{background:var(--accent2);z-index:4}
+tbody tr:nth-child(even) td:not(.k){filter:brightness(.97)}
+td.cA{background:var(--tA)}td.cB{background:var(--tB)}td.cG{background:var(--tG)}td.cD{background:var(--tD)}
+td.me{outline:2px solid var(--cn);outline-offset:-2px;font-weight:700}
+.btn{width:100%;padding:13px 16px;border:0;border-radius:12px;background:var(--accent);color:var(--btntxt);font:inherit;font-weight:700;cursor:pointer}
+.note{font-size:12px;color:var(--sub);margin:6px 2px 0}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+<h1>목표금액 역산 계산기 (물가 반영)</h1>
+<p class="lead">"지금 돈으로 이만큼 모으고 싶다"를 입력하면, 물가가 오른 뒤에 실제로 필요한 목표금액과 매월 납입해야 할 금액을 계산합니다.</p>
+
+<section class="card">
+  <div class="grid">
+    <label for="t">목표금액 (지금 가치)<span class="inp"><input id="t" inputmode="numeric" autocomplete="off" value="307,004"></span></label>
+    <label for="n">납입 가능 년수<span class="inp"><input id="n" inputmode="numeric" autocomplete="off" value="30"><em>년</em></span></label>
+    <label for="b">예상 연 수익률<span class="inp"><input id="b" inputmode="decimal" autocomplete="off" value="8"><em>%</em></span></label>
+    <label for="i">연평균 물가상승률<span class="inp"><input id="i" inputmode="decimal" autocomplete="off" value="3"><em>%</em></span></label>
+  </div>
+  <p class="hint">금액 단위는 자유입니다. 예를 들어 만원 단위로 입력하면 결과도 같은 단위로 나옵니다.</p>
+  <details>
+    <summary>세부 설정</summary>
+    <div class="opts">
+      <label for="tm">납입 시점
+        <select id="tm"><option value="end">매월 말 (기본)</option><option value="begin">매월 초</option></select>
+      </label>
+      <label for="m">수익률 적용 방식
+        <select id="m"><option value="nominal">연 수익률 ÷ 12 를 매달 적용 (기본)</option><option value="eff">연 실효 (1년 뒤 증가율 = 입력값)</option></select>
+      </label>
+    </div>
+  </details>
+  <p id="err" class="err" role="alert"></p>
+</section>
+
+<section class="card" id="res" aria-live="polite">
+  <div class="cards">
+    <div class="box" style="border-top-color:var(--cr)">
+      <div class="t"><span class="yn"></span> 뒤 실제로 필요한 목표금액</div>
+      <div class="v" id="tn" style="color:var(--cr)">-</div>
+      <div class="s" id="tns"></div>
+    </div>
+    <div class="box" style="border-top-color:var(--cn)">
+      <div class="t">필요한 월 납입금 (매월 같은 금액)</div>
+      <div class="v" id="dm" style="color:var(--cn)">-</div>
+      <div class="s" id="dms"></div>
+    </div>
+  </div>
+  <div class="warn" id="warn"></div>
+  <p class="insight" id="insight"></p>
+  <div id="chart" style="margin-top:12px"></div>
+  <div class="legend" id="legend"></div>
+</section>
+
+<section class="card">
+  <h2>수익률·기간별 필요 월 납입금</h2>
+  <p class="lead" style="margin:0">같은 목표금액(지금 가치)을 물가 반영해서 모으려면 매월 얼마가 필요한지 한눈에 비교합니다. 파란 테두리가 지금 입력값입니다.</p>
+  <div class="tbl"><table><thead id="mh"></thead><tbody id="mb"></tbody></table></div>
+</section>
+
+<section class="card">
+  <button class="btn" id="dl" type="button">엑셀로 내려받기 (.xlsx)</button>
+  <p class="note">입력값·결과·수익률/기간별 표·연도별 진행(차트 포함)이 수식으로 들어 있어, 엑셀에서 숫자를 바꾸면 다시 계산됩니다.</p>
+</section>
+
+<section class="card">
+  <h2>이렇게 계산했어요</h2>
+  <p class="note" style="font-size:13.5px;margin:6px 0 0">① 실제 필요한 목표금액 = 지금 가치 목표금액 × (1 + 물가상승률)<sup>년수</sup>. 물가가 오른 만큼 같은 물건을 사려면 더 큰 숫자가 필요합니다.<br>
+  ② 월 납입금 = 필요한 목표금액 ÷ (월 납입 1을 N년간 수익률로 불린 금액). 납입 시점과 수익률 적용 방식은 세부 설정을 따릅니다.</p>
+</section>
+<p class="note">세전 기준이며 수수료·세금은 반영하지 않은 단순 시뮬레이션입니다. 수익률과 물가는 매년 달라지므로 결과는 참고용이며 투자 권유가 아닙니다.</p>
+</main>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var nf = new Intl.NumberFormat('ko-KR'), state = null;
+  function f0(x){ return nf.format(Math.round(x)); }
+  function f1(x){ return x >= 100 ? f0(x) : (Math.round(x * 10) / 10).toLocaleString('ko-KR'); }
+  function num(s){ return parseFloat(String(s).replace(/[,\s원%년]/g, '')); }
+  function readInputs(){
+    var T = num($('t').value), N = num($('n').value), B = num($('b').value), I = num($('i').value), e = '';
+    if (!isFinite(T) || T <= 0) e = '목표금액을 0보다 큰 값으로 입력해 주세요.';
+    else if (T > 1e13) e = '목표금액이 너무 큽니다.';
+    else if (!isFinite(N) || N < 1 || N > 60 || Math.floor(N) !== N) e = '납입 가능 년수는 1~60년 사이의 정수로 입력해 주세요.';
+    else if (!isFinite(B) || B < 0 || B > 100) e = '예상 연 수익률은 0~100% 사이로 입력해 주세요.';
+    else if (!isFinite(I) || I < 0 || I > 50) e = '물가상승률은 0~50% 사이로 입력해 주세요.';
+    return {T: T, N: N, B: B / 100, I: I / 100, e: e, timing: $('tm').value, mode: $('m').value};
+  }
+  function rOf(p, B){ return p.mode === 'nominal' ? B / 12 : Math.pow(1 + B, 1 / 12) - 1; }
+  /* 월 납입 1(또는 매년 (1+I)배씩 증액)을 N년 납입했을 때의 만기 금액 */
+  function fvUnit(p, N, B, grow){
+    var r = rOf(p, B), bal = 0;
+    for (var m = 1; m <= N * 12; m++){
+      var d = grow ? Math.pow(1 + p.I, Math.floor((m - 1) / 12)) : 1;
+      bal = bal + d + (p.timing === 'begin' ? bal + d : bal) * r;
+    }
+    return bal;
+  }
+  function need(p, N, B){ return p.T * Math.pow(1 + p.I, N) / fvUnit(p, N, B, false); }
+  function series(p, D){
+    var r = rOf(p, p.B), bal = 0, dep = 0, rows = [{y: 0, cpi: 1, dep: 0, bal: 0, real: 0}];
+    for (var m = 1; m <= p.N * 12; m++){
+      bal = bal + D + (p.timing === 'begin' ? bal + D : bal) * r; dep += D;
+      if (m % 12 === 0){ var y = m / 12, cpi = Math.pow(1 + p.I, y); rows.push({y: y, cpi: cpi, dep: dep, bal: bal, real: bal / cpi}); }
+    }
+    return rows;
+  }
+  function chart(rows, p, TN){
+    var el = $('chart'), W = Math.max(300, Math.round(el.clientWidth || 700)), H = 380, pl = 70, pr = 16, pt = 18, pb = 30, n = p.N, iw = W - pl - pr, ih = H - pt - pb;
+    var raw = Math.max(TN, rows[n].dep) || 1;
+    var mag = Math.pow(10, Math.floor(Math.log10(raw / 4))), f = raw / 4 / mag, stepN = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
+    var kN = Math.max(1, Math.ceil(raw / stepN - 1e-9)), max = stepN * kN;
+    function X(y){ return pl + iw * y / n; }
+    function Y(v){ return pt + ih * (1 - v / max); }
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="목표금액을 향한 잔액 변화 선그래프">';
+    for (var g = 0; g <= kN; g++){
+      var yy = Y(stepN * g).toFixed(1);
+      s += '<line class="grd" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + yy + '" y2="' + yy + '"/><text class="axis" text-anchor="end" x="' + (pl - 6) + '" y="' + (+yy + 4) + '">' + f0(stepN * g) + '</text>';
+    }
+    var stp = Math.ceil(n / Math.max(3, Math.floor(iw / 60)));
+    for (var y = 0; y <= n; y++) if (y % stp === 0 || y === n) s += '<text class="axis" text-anchor="middle" x="' + X(y).toFixed(1) + '" y="' + (H - 8) + '">' + y + '년</text>';
+    function path(key){ return rows.map(function(r, i){ return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(r[key]).toFixed(1); }).join(''); }
+    s += '<path class="pr" d="' + path('dep') + '"/>';
+    s += '<line class="tg" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + Y(p.T).toFixed(1) + '" y2="' + Y(p.T).toFixed(1) + '"/>';
+    s += '<path class="ln" style="stroke:var(--cn)" d="' + path('bal') + '"/><path class="rl" style="stroke:var(--cr)" d="' + path('real') + '"/>';
+    var bw = iw / n;
+    rows.forEach(function(r){
+      var tip = r.y + '년차 (물가 ' + r.cpi.toFixed(2) + '배, 구매력 ' + (100 / r.cpi).toFixed(1) + '%)\n누적 납입 ' + f0(r.dep) + '\n잔액 ' + f0(r.bal) + '\n잔액(지금 가치) ' + f0(r.real) + '\n목표 달성률 ' + (r.real / p.T * 100).toFixed(1) + '%';
+      s += '<g class="hv"><title>' + tip + '</title><line class="vl" x1="' + X(r.y).toFixed(1) + '" x2="' + X(r.y).toFixed(1) + '" y1="' + pt + '" y2="' + (H - pb) + '"/><rect class="band" x="' + (X(r.y) - bw / 2).toFixed(1) + '" y="' + pt + '" width="' + bw.toFixed(1) + '" height="' + ih + '"/></g>';
+    });
+    var L = rows[n], yb = Y(L.bal), yr = Y(L.real);
+    s += '<circle cx="' + X(n).toFixed(1) + '" cy="' + yb.toFixed(1) + '" r="3.5" style="fill:var(--cn)"/><text class="vlab" text-anchor="end" style="fill:var(--cn)" x="' + (X(n) - 8).toFixed(1) + '" y="' + (yb - 7).toFixed(1) + '">필요 목표(명목) ' + f0(L.bal) + '</text>';
+    s += '<circle cx="' + X(n).toFixed(1) + '" cy="' + yr.toFixed(1) + '" r="3.5" style="fill:var(--cr)"/><text class="vlab" text-anchor="end" style="fill:var(--cr)" x="' + (X(n) - 8).toFixed(1) + '" y="' + (yr + 16).toFixed(1) + '">지금 가치 ' + f0(L.real) + '</text>';
+    el.innerHTML = s + '</svg>';
+  }
+  function render(){
+    var p = readInputs();
+    $('err').textContent = p.e; $('res').classList.toggle('dim', !!p.e);
+    if (p.e) return;
+    var cpiN = Math.pow(1 + p.I, p.N), TN = p.T * cpiN, u = fvUnit(p, p.N, p.B, false), D = TN / u, D0 = p.T / u;
+    var rows = series(p, D); state = {p: p, rows: rows, TN: TN};
+    var pi = (p.I * 100).toFixed(1).replace('.0', '');
+    Array.prototype.forEach.call(document.querySelectorAll('.yn'), function(e){ e.textContent = p.N + '년'; });
+    $('tn').textContent = f0(TN);
+    $('tns').innerHTML = '지금 가치 <b>' + f0(p.T) + '</b> × 물가 ' + cpiN.toFixed(2) + '배 (연 ' + pi + '%)';
+    $('dm').textContent = f1(D);
+    var dep = D * p.N * 12;
+    $('dms').innerHTML = '총 납입 <b>' + f0(dep) + '</b> · 수익 <b>' + f0(TN - dep) + '</b> (목표의 ' + (TN ? (TN - dep) / TN * 100 : 0).toFixed(0) + '%)';
+    var gap = D - D0;
+    $('warn').innerHTML = '물가를 무시하고 지금 가치 ' + f0(p.T) + '만 모으면 월 <b>' + f1(D0) + '</b>이면 되지만, 그 돈은 ' + p.N + '년 뒤 지금 돈으로 <b>' + f0(p.T / cpiN) + '</b>(' + (100 / cpiN).toFixed(1) + '%)밖에 안 됩니다. 물가를 반영하면 월 <b>' + f1(gap) + '</b>(+' + (D0 ? (gap / D0 * 100).toFixed(0) : 0) + '%)를 더 내야 합니다.';
+    $('insight').innerHTML = '지금 ' + f0(p.T) + '으로 살 수 있는 것을 ' + p.N + '년 뒤에 사려면 <b>' + f0(TN) + '</b>이 필요합니다. 반대로 ' + p.N + '년 뒤의 ' + f0(p.T) + '은 지금 돈으로 <b>' + f0(p.T / cpiN) + '</b>의 가치입니다. 화폐가치가 ' + (100 - 100 / cpiN).toFixed(1) + '% 하락하는 셈입니다.';
+    chart(rows, p, TN);
+    $('legend').innerHTML = '<i style="background:var(--sub)"></i>누적 납입(점선)<i style="background:var(--cn)"></i>잔액(명목)<i style="background:var(--cr)"></i>잔액(지금 가치, 점)<i style="background:var(--cg)"></i>지금 가치 목표금액';
+    var yrs = [10, 20, 30, 40, p.N].filter(function(v, i, a){ return a.indexOf(v) === i; }).sort(function(a, b){ return a - b; });
+    var rts = [4, 6, 8, 10, Math.round(p.B * 1000) / 10].filter(function(v, i, a){ return a.indexOf(v) === i; }).sort(function(a, b){ return a - b; });
+    $('mh').innerHTML = '<tr><th class="k" style="min-width:70px">수익률</th>' + yrs.map(function(y){ return '<th>' + y + '년</th>'; }).join('') + '</tr>';
+    $('mb').innerHTML = rts.map(function(R){
+      return '<tr><td class="k">' + R + '%</td>' + yrs.map(function(y){
+        var me = (Math.abs(R - p.B * 100) < 1e-9 && y === p.N) ? ' me' : '';
+        return '<td class="cA' + me + '">' + f1(need(p, y, R / 100)) + '</td>';
+      }).join('') + '</tr>';
+    }).join('');
+  }
+  ['t', 'n', 'b', 'i'].forEach(function(id){ $(id).addEventListener('input', render); });
+  ['tm', 'm'].forEach(function(id){ $(id).addEventListener('change', render); });
+  $('t').addEventListener('input', function(e){
+    var el = e.target, d = el.value.replace(/\D/g, '').slice(0, 13), fromEnd = el.value.length - (el.selectionStart || 0);
+    el.value = d ? nf.format(+d) : '';
+    var pos = Math.max(0, el.value.length - fromEnd); try { el.setSelectionRange(pos, pos); } catch (x) {}
+  });
+  function download(blob, name){
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  function colName(i){ var s = ''; while (i > 0){ var m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+  function esc(t){ return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  function buildXlsx(s){
+    var p = s.p, ny = p.N, rows = s.rows;
+    var NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main', RNS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    var ST = {fonts: [], fills: [], borders: [], numFmts: [], xfs: [], dxfs: [], map: {}};
+    function fontXml(o){ return '<font>' + (o.b ? '<b/>' : '') + (o.i ? '<i/>' : '') + '<sz val="' + (o.sz || 10) + '"/><color rgb="FF' + (o.c || '000000') + '"/><name val="Arial"/><family val="2"/></font>'; }
+    function pick(arr, x){ var i = arr.indexOf(x); if (i < 0){ arr.push(x); i = arr.length - 1; } return i; }
+    function fmtId(code){
+      if (!code) return 0; if (code === '#,##0') return 3; if (code === '0.00%') return 10;
+      var i = ST.numFmts.indexOf(code); if (i < 0){ ST.numFmts.push(code); i = ST.numFmts.length - 1; } return 164 + i;
+    }
+    ST.fills.push('<fill><patternFill patternType="none"/></fill>', '<fill><patternFill patternType="gray125"/></fill>');
+    ST.borders.push('<border><left/><right/><top/><bottom/><diagonal/></border>');
+    ST.fonts.push(fontXml({}));
+    function xf(o){
+      o = o || {};
+      var key = JSON.stringify(o); if (ST.map[key] !== undefined) return ST.map[key];
+      var fo = pick(ST.fonts, fontXml(o)), fi = 0, bo = 0;
+      if (o.fill) fi = pick(ST.fills, '<fill><patternFill patternType="solid"><fgColor rgb="FF' + o.fill + '"/><bgColor indexed="64"/></patternFill></fill>');
+      if (o.bd) bo = pick(ST.borders, '<border><left style="thin"><color rgb="FFBFBFBF"/></left><right style="thin"><color rgb="FFBFBFBF"/></right><top style="thin"><color rgb="FFBFBFBF"/></top><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border>');
+      var al = (o.h || o.v || o.wrap) ? '<alignment' + (o.h ? ' horizontal="' + o.h + '"' : '') + (o.v ? ' vertical="' + o.v + '"' : '') + (o.wrap ? ' wrapText="1"' : '') + '/>' : '';
+      var x = '<xf numFmtId="' + fmtId(o.fmt) + '" fontId="' + fo + '" fillId="' + fi + '" borderId="' + bo + '" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"' + (o.un ? ' applyProtection="1"' : '') + ((al || o.un) ? (al ? ' applyAlignment="1">' + al : '>') + (o.un ? '<protection locked="0"/>' : '') + '</xf>' : '/>');
+      ST.xfs.push(x); ST.map[key] = ST.xfs.length - 1; return ST.map[key];
+    }
+    xf({});
+    function dxf(font, fill){
+      return '<dxf><font>' + (font.b ? '<b/>' : '') + '<color rgb="FF' + font.c + '"/></font><fill><patternFill patternType="solid"><fgColor rgb="FF' + fill + '"/><bgColor rgb="FF' + fill + '"/></patternFill></fill></dxf>';
+    }
+    ST.dxfs = [dxf({b: 1, c: '8A4B00'}, 'FFE0B2'), dxf({b: 1, c: '1B5E20'}, 'C8E6C9'), dxf({b: 1, c: '6B5B00'}, 'FFF59D'), dxf({b: 0, c: '000000'}, 'FFF8E1'), dxf({b: 0, c: 'BBBBBB'}, 'FFFFFF')];
+
+    var S = {
+      title: xf({b: 1, sz: 14}), note: xf({c: '7F7F7F', sz: 9}), sec: xf({b: 1, c: 'FFFFFF', fill: '1F3864'}),
+      lbl: xf({b: 1, bd: 1}), noteC: xf({c: '555555', sz: 9, bd: 1}),
+      inN: xf({c: '0000FF', fill: 'FFFF00', un: 1, bd: 1, fmt: '#,##0', h: 'right'}), inP: xf({c: '0000FF', fill: 'FFFF00', un: 1, bd: 1, fmt: '0.00%', h: 'right'}),
+      inT: xf({c: '0000FF', fill: 'FFFF00', un: 1, bd: 1, h: 'right'}),
+      vN: xf({bd: 1, fmt: '#,##0', h: 'right'}), vP1: xf({bd: 1, fmt: '0.0%', h: 'right'}), vP4: xf({bd: 1, fmt: '0.0000%', h: 'right'}), vT: xf({bd: 1, h: 'right'}), vI: xf({bd: 1, h: 'right'}),
+      hdr: xf({b: 1, c: 'FFFFFF', fill: '1F3864', bd: 1, h: 'center', v: 'center', wrap: 1}),
+      cN: xf({bd: 1, fmt: '#,##0'}), cC: xf({bd: 1, h: 'center'}), cT: xf({bd: 1, b: 1, c: '8A4B00'}), cH: xf({bd: 1, c: '999999', sz: 9, h: 'center'}),
+      lg1: xf({fill: 'FFE0B2', bd: 1, b: 1}), lg2: xf({fill: 'C8E6C9', bd: 1, b: 1}), lg3: xf({fill: 'FFF59D', bd: 1, b: 1}), txt: xf({sz: 10}), bold: xf({b: 1})
+    };
+
+    function Sheet(name){ this.name = name; this.rows = {}; this.cols = []; this.cf = []; this.dv = []; this.freeze = false; this.drawing = null; this.heights = {}; this.tab = false; }
+    Sheet.prototype.set = function(r, c, v, st, f){ (this.rows[r] = this.rows[r] || {})[c] = {v: v, s: st || 0, f: f}; };
+    function cellXml(r, c, o){
+      var a = colName(c) + r, v = o.v, f = o.f, s = o.s ? ' s="' + o.s + '"' : '', fx = f ? '<f>' + esc(f) + '</f>' : '';
+      if (v && typeof v === 'object' && v.err) return '<c r="' + a + '"' + s + ' t="e">' + fx + '<v>' + v.err + '</v></c>';
+      if (typeof v === 'number'){ if (!isFinite(v)) v = 0; return '<c r="' + a + '"' + s + '>' + fx + '<v>' + v + '</v></c>'; }
+      if (f) return '<c r="' + a + '"' + s + ' t="str">' + fx + '<v>' + esc(v) + '</v></c>';
+      return '<c r="' + a + '"' + s + ' t="inlineStr"><is><t xml:space="preserve">' + esc(v) + '</t></is></c>';
+    }
+    Sheet.prototype.xml = function(){
+      var self = this, rn = Object.keys(this.rows).map(Number).sort(function(a, b){ return a - b; }), maxC = 1, maxR = 1;
+      var data = rn.map(function(r){
+        var cs = Object.keys(self.rows[r]).map(Number).sort(function(a, b){ return a - b; });
+        maxR = Math.max(maxR, r); maxC = Math.max(maxC, cs[cs.length - 1]);
+        var ht = self.heights[r] ? ' ht="' + self.heights[r] + '" customHeight="1"' : '';
+        return '<row r="' + r + '"' + ht + '>' + cs.map(function(c){ return cellXml(r, c, self.rows[r][c]); }).join('') + '</row>';
+      }).join('');
+      var o = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="' + NS + '" xmlns:r="' + RNS + '">';
+      o += '<dimension ref="A1:' + colName(maxC) + maxR + '"/>';
+      o += '<sheetViews><sheetView workbookViewId="0"' + (this.tab ? ' tabSelected="1"' : '') + '>' + (this.freeze ? '<pane ySplit="' + (this.freezeRow || 1) + '" topLeftCell="A' + ((this.freezeRow || 1) + 1) + '" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A' + ((this.freezeRow || 1) + 1) + '" sqref="A' + ((this.freezeRow || 1) + 1) + '"/>' : '') + '</sheetView></sheetViews>';
+      o += '<sheetFormatPr defaultRowHeight="15"/>';
+      if (this.cols.length) o += '<cols>' + this.cols.map(function(w, i){ return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; }).join('') + '</cols>';
+      o += '<sheetData>' + data + '</sheetData>';
+      if (this.protect) o += '<sheetProtection sheet="1" formatColumns="0" formatRows="0"/>';
+      if (this.merges && this.merges.length) o += '<mergeCells count="' + this.merges.length + '">' + this.merges.map(function(m){ return '<mergeCell ref="' + m + '"/>'; }).join('') + '</mergeCells>';
+      var pr = 1;
+      this.cf.forEach(function(c){ o += '<conditionalFormatting sqref="' + c.sqref + '"><cfRule type="expression" dxfId="' + c.dxf + '" priority="' + (pr++) + '"><formula>' + esc(c.f) + '</formula></cfRule></conditionalFormatting>'; });
+      if (this.dv.length) o += '<dataValidations count="' + this.dv.length + '">' + this.dv.map(function(d){ return '<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="' + d.sqref + '"><formula1>' + esc(d.list) + '</formula1></dataValidation>'; }).join('') + '</dataValidations>';
+      o += '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>';
+      if (this.drawing) o += '<drawing r:id="rId1"/>';
+      return o + '</worksheet>';
+    };
+
+
+
+
+    var CP = "'연도별'!", SM = "'목표역산'!", last = ny + 2, end = last;
+    var sm = new Sheet('목표역산'), cp = new Sheet('연도별');
+    sm.tab = true; cp.freeze = true; cp.freezeRow = 1;
+    var dec = xf({bd: 1, fmt: '#,##0.0', h: 'right'}), num2 = xf({bd: 1, fmt: '0.00', h: 'right'}), bigN = xf({b: 1, sz: 12, bd: 1, fmt: '#,##0', h: 'right', fill: 'FFF0DC'}), bigD = xf({b: 1, sz: 12, bd: 1, fmt: '#,##0.0', h: 'right', fill: 'E6EDFC'});
+    var inI = xf({c: '0000FF', fill: 'FFFF00', un: 1, bd: 1, fmt: '#,##0', h: 'right'});
+    var Tn = p.T, Nn = ny, Bn = p.B, In = p.I, cpiN = Math.pow(1 + In, Nn), TNv = Tn * cpiN, uN = fvUnit(p, Nn, Bn, false), Dv = TNv / uN, D0 = Tn / uN;
+    var tmL = p.timing === 'begin' ? '월초' : '월말', mdL = p.mode === 'eff' ? '연실효' : '연÷12';
+    function secRow(r, t){ for (var c = 1; c <= 6; c++) sm.set(r, c, c === 1 ? t : '', S.sec); }
+    sm.cols = [40, 16, 16, 16, 16, 16];
+    sm.set(1, 1, '목표금액 역산 계산기 (물가 반영)', S.title);
+    sm.set(2, 1, '※ 노란 칸이 입력값입니다. 바꾸면 결과·표·연도별 시트·차트가 자동으로 다시 계산됩니다. 노란 칸 외에는 시트가 보호되어 있습니다(암호 없음, 검토 > 시트 보호 해제).', S.note);
+    secRow(3, '[입력값]');
+    sm.set(4, 1, '목표금액 (지금 가치)', S.lbl); sm.set(4, 2, Tn, inI);
+    sm.set(5, 1, '납입 가능 년수', S.lbl); sm.set(5, 2, Nn, S.vI); sm.set(5, 3, '연도별 시트의 행 수로 정해져 있어 바꿀 수 없습니다. 바꾸려면 웹 페이지에서 다시 내려받으세요.', S.note);
+    sm.set(6, 1, '예상 연 수익률', S.lbl); sm.set(6, 2, Bn, S.inP);
+    sm.set(7, 1, '연평균 물가상승률', S.lbl); sm.set(7, 2, In, S.inP);
+    sm.set(8, 1, '납입 시점', S.lbl); sm.set(8, 2, tmL, S.inT); sm.set(8, 3, "목록에서 '월말' 또는 '월초' 선택", S.note);
+    sm.set(9, 1, '수익률 적용 방식', S.lbl); sm.set(9, 2, mdL, S.inT); sm.set(9, 3, "'연÷12'(연 수익률÷12를 매달 적용) 또는 '연실효'", S.note);
+    secRow(11, '[결과]');
+    var rmV = rOf(p, Bn);
+    sm.set(12, 1, '월 수익률', S.lbl); sm.set(12, 2, rmV, S.vP4, 'IF($B$9="연실효",(1+B6)^(1/12)-1,B6/12)');
+    sm.set(13, 1, '물가 배수 (납입 기간 동안)', S.lbl); sm.set(13, 2, cpiN, num2, '(1+B7)^B5');
+    sm.set(14, 1, '실제로 필요한 목표금액', S.lbl); sm.set(14, 2, TNv, bigN, 'B4*B13'); sm.set(14, 3, '= 지금 가치 목표 × 물가 배수', S.note);
+    sm.set(15, 1, '월 납입 계수 (월 1을 기간 동안 불린 값)', S.lbl); sm.set(15, 2, uN, dec, 'IF(B12=0,B5*12,((1+B12)^(B5*12)-1)/B12*IF($B$8="월초",1+B12,1))');
+    sm.set(16, 1, '필요한 월 납입금 (매월 같은 금액)', S.lbl); sm.set(16, 2, Dv, bigD, 'B14/B15');
+    sm.set(17, 1, '총 납입', S.lbl); sm.set(17, 2, Dv * Nn * 12, S.vN, 'B16*B5*12');
+    sm.set(18, 1, '총 수익', S.lbl); sm.set(18, 2, TNv - Dv * Nn * 12, S.vN, 'B14-B17');
+    sm.set(19, 1, '구매력 (지금 돈 1의 기간 뒤 가치)', S.lbl); sm.set(19, 2, 1 / cpiN, S.vP1, '1/B13');
+    sm.set(20, 1, '화폐가치 하락률', S.lbl); sm.set(20, 2, 1 - 1 / cpiN, S.vP1, '1-B19');
+    sm.set(21, 1, '물가를 무시했을 때 월 납입금', S.lbl); sm.set(21, 2, D0, dec, 'B4/B15');
+    sm.set(22, 1, '물가 반영으로 더 내야 할 월 금액', S.lbl); sm.set(22, 2, Dv - D0, dec, 'B16-B21');
+    sm.set(23, 1, '물가를 무시한 목표의 기간 뒤 지금 가치', S.lbl); sm.set(23, 2, Tn / cpiN, S.vN, 'B4/B13'); sm.set(23, 3, '지금 목표금액만큼 모아도 기간 뒤엔 이 정도 가치밖에 안 됨', S.note);
+    sm.set(24, 1, '검산 (연도별 마지막 잔액 = 필요 목표)', S.lbl); sm.set(24, 2, '일치', S.vT, 'IF(ABS(' + CP + 'F' + last + '-B14)<1,"일치","불일치")');
+    secRow(26, '[수익률·기간별 필요 월 납입금]');
+    var YRS = [10, 20, 30, 40], RTS = [0.04, 0.06, 0.08, 0.10];
+    sm.set(27, 1, '연 수익률 \\ 납입 기간(년)', S.hdr);
+    YRS.forEach(function(y, k){ sm.set(27, 2 + k, y, xf({c: '0000FF', fill: 'FFFF00', un: 1, bd: 1, b: 1, h: 'center'})); });
+    sm.set(27, 6, Nn, xf({b: 1, fill: 'D9D9D9', bd: 1, h: 'center'}), 'B5');
+    var allY = YRS.concat([Nn]), allR = RTS.concat([Bn]);
+    allR.forEach(function(R, i){
+      var r = 28 + i;
+      if (i < 4) sm.set(r, 1, R, S.inP); else sm.set(r, 1, R, xf({bd: 1, fmt: '0.00%', h: 'right', b: 1, fill: 'D9D9D9'}), 'B6');
+      allY.forEach(function(y, k){
+        var cl = colName(2 + k), rm = 'IF($B$9="연실효",(1+$A' + r + ')^(1/12)-1,$A' + r + '/12)';
+        var f = '$B$4*(1+$B$7)^' + cl + '$27/IF($A' + r + '=0,' + cl + '$27*12,((1+' + rm + ')^(' + cl + '$27*12)-1)/' + rm + '*IF($B$8="월초",1+' + rm + ',1))';
+        sm.set(r, 2 + k, need(p, y, R), dec, f);
+      });
+    });
+    sm.set(34, 1, '노란 칸은 바꿀 수 있고, 회색 칸(현재 입력값)은 위 입력값과 자동 연동이라 수정할 수 없습니다. 주황색 칸이 현재 입력 조합입니다.', S.note);
+    sm.set(33, 1, '※ 세전 기준이며 수수료·세금은 반영하지 않은 단순 시뮬레이션입니다. 수익률과 물가는 매년 달라지므로 결과는 참고용입니다.', S.note);
+    sm.cf = [{sqref: 'B28:F32', dxf: 0, f: 'AND($A28=$B$6,B$27=$B$5)'}];
+    sm.dv = [{sqref: 'B8', list: '"월말,월초"'}, {sqref: 'B9', list: '"연÷12,연실효"'}];
+    sm.drawing = 1; sm.protect = true; cp.protect = true;
+
+    var cH = ['연차', '물가 배수', '구매력', '필요 목표(명목)', '누적 납입', '잔액(명목)', '잔액(지금 가치)', '달성률', '목표(지금 가치)'];
+    cp.cols = [8, 12, 12, 17, 15, 15, 17, 12, 17];
+    cH.forEach(function(h, i){ cp.set(1, i + 1, h, i === 8 ? xf({b: 1, c: '777777', fill: 'EEEEEE', bd: 1, h: 'center', v: 'center', sz: 9, wrap: 1}) : S.hdr); });
+    var tA = xf({fill: 'FFF0DC', bd: 1, fmt: '#,##0'}), tB = xf({fill: 'E6EDFC', bd: 1, fmt: '#,##0'}), tG = xf({fill: 'E3F4EC', bd: 1, fmt: '0.0%'}), tD = xf({fill: 'ECEFF3', bd: 1, fmt: '0.00'}), tD2 = xf({fill: 'ECEFF3', bd: 1, fmt: '0.0%'});
+    rows.forEach(function(r, i){
+      var q = i + 2;
+      cp.set(q, 1, r.y, S.cC);
+      cp.set(q, 2, r.cpi, tD, '(1+' + SM + '$B$7)^A' + q);
+      cp.set(q, 3, 1 / r.cpi, tD2, '1/B' + q);
+      cp.set(q, 4, Tn * r.cpi, tA, SM + '$B$4*B' + q);
+      cp.set(q, 5, r.dep, S.cN, SM + '$B$16*12*A' + q);
+      cp.set(q, 6, r.bal, tB, SM + '$B$16*IF(' + SM + '$B$12=0,A' + q + '*12,((1+' + SM + '$B$12)^(A' + q + '*12)-1)/' + SM + '$B$12*IF(' + SM + '$B$8="월초",1+' + SM + '$B$12,1))');
+      cp.set(q, 7, r.real, tB, 'F' + q + '/B' + q);
+      cp.set(q, 8, r.real / Tn, tG, 'G' + q + '/' + SM + '$B$4');
+      cp.set(q, 9, Tn, S.cN, SM + '$B$4');
+    });
+    var CNS = 'xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="' + RNS + '"';
+    function rich(t, sz, b){ return '<c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="' + sz + '" b="' + (b ? 1 : 0) + '"/></a:pPr><a:r><a:rPr lang="ko-KR" sz="' + sz + '" b="' + (b ? 1 : 0) + '"/><a:t>' + esc(t) + '</a:t></a:r></a:p></c:rich></c:tx>'; }
+    function ttl(t, sz, b){ return '<c:title>' + rich(t, sz, b) + '<c:overlay val="0"/></c:title>'; }
+    function fill(hex){ return '<c:spPr><a:solidFill><a:srgbClr val="' + hex + '"/></a:solidFill></c:spPr>'; }
+    function axes(catTitle, valTitle, catRef){
+      return '<c:catAx><c:axId val="5001"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/>' + ttl(catTitle, 1000, 0) +
+        '<c:numFmt formatCode="General" sourceLinked="0"/><c:majorTickMark val="out"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="5002"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:noMultiLvlLbl val="0"/></c:catAx>' +
+        '<c:valAx><c:axId val="5002"/><c:scaling><c:orientation val="minMax"/><c:min val="0"/></c:scaling><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines/>' + ttl(valTitle, 1000, 0) +
+        '<c:numFmt formatCode="#,##0" sourceLinked="0"/><c:majorTickMark val="out"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="5001"/><c:crosses val="autoZero"/><c:crossBetween val="between"/></c:valAx>';
+    }
+
+    var CPQ = esc(CP);
+    function ser2(i, name, col, hex, dash){
+      return '<c:ser><c:idx val="' + i + '"/><c:order val="' + i + '"/><c:tx><c:v>' + esc(name) + '</c:v></c:tx><c:spPr><a:ln w="' + (dash ? 22225 : 31750) + '" cap="rnd"><a:solidFill><a:srgbClr val="' + hex + '"/></a:solidFill>' + (dash ? '<a:prstDash val="' + dash + '"/>' : '') + '<a:round/></a:ln></c:spPr><c:marker><c:symbol val="none"/></c:marker>' +
+        '<c:cat><c:numRef><c:f>' + CPQ + '$A$2:$A$' + end + '</c:f></c:numRef></c:cat><c:val><c:numRef><c:f>' + CPQ + '$' + col + '$2:$' + col + '$' + end + '</c:f></c:numRef></c:val><c:smooth val="0"/></c:ser>';
+    }
+    var sers = ser2(0, '누적 납입', 'E', '7F7F7F', 'dash') + ser2(1, '잔액(명목)', 'F', '2457D6', null) + ser2(2, '잔액(지금 가치)', 'G', 'E07B00', 'sysDot') + ser2(3, '지금 가치 목표금액', 'I', '1A8F5B', 'dash');
+    var chart1 = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace ' + CNS + '><c:roundedCorners val="0"/><c:chart>' + ttl('목표금액을 향한 잔액 변화 (선 위에 커서를 올려 보세요)', 1200, 1) + '<c:autoTitleDeleted val="0"/><c:plotArea><c:layout/>' +
+      '<c:lineChart><c:grouping val="standard"/><c:varyColors val="0"/>' + sers + '<c:marker val="1"/><c:axId val="5001"/><c:axId val="5002"/></c:lineChart>' + axes('연차(년)', '금액', '') + '</c:plotArea><c:legend><c:legendPos val="b"/><c:overlay val="0"/></c:legend><c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart></c:chartSpace>';
+    function drawing(c0, r0, c1, r1){
+      return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><xdr:twoCellAnchor>' +
+        '<xdr:from><xdr:col>' + c0 + '</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>' + r0 + '</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>' + c1 + '</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>' + r1 + '</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to>' +
+        '<xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="2" name="Chart 1"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr><xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:r="' + RNS + '" r:id="rId1"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor></xdr:wsDr>';
+    }
+    var REL = 'http://schemas.openxmlformats.org/package/2006/relationships';
+    function rels(items){ return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="' + REL + '">' + items.map(function(x){ return '<Relationship Id="' + x[0] + '" Type="' + RNS + '/' + x[1] + '" Target="' + x[2] + '"/>'; }).join('') + '</Relationships>'; }
+
+    var sheets = [sm, cp];
+    var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="' + NS + '">' +
+      (ST.numFmts.length ? '<numFmts count="' + ST.numFmts.length + '">' + ST.numFmts.map(function(c, i){ return '<numFmt numFmtId="' + (164 + i) + '" formatCode="' + esc(c) + '"/>'; }).join('') + '</numFmts>' : '') +
+      '<fonts count="' + ST.fonts.length + '">' + ST.fonts.join('') + '</fonts><fills count="' + ST.fills.length + '">' + ST.fills.join('') + '</fills><borders count="' + ST.borders.length + '">' + ST.borders.join('') + '</borders>' +
+      '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="' + ST.xfs.length + '">' + ST.xfs.join('') + '</cellXfs>' +
+      '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles><dxfs count="' + ST.dxfs.length + '">' + ST.dxfs.join('') + '</dxfs></styleSheet>';
+
+    var zip = new JSZip();
+    zip.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      sheets.map(function(x, i){ return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join('') +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>' +
+      '<Override PartName="/xl/charts/chart1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/></Types>');
+    zip.file('_rels/.rels', rels([['rId1', 'officeDocument', 'xl/workbook.xml']]));
+    zip.file('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="' + NS + '" xmlns:r="' + RNS + '"><bookViews><workbookView activeTab="0"/></bookViews><sheets>' +
+      sheets.map(function(x, i){ return '<sheet name="' + x.name + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join('') + '</sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>');
+    zip.file('xl/_rels/workbook.xml.rels', rels(sheets.map(function(x, i){ return ['rId' + (i + 1), 'worksheet', 'worksheets/sheet' + (i + 1) + '.xml']; }).concat([['rId' + (sheets.length + 1), 'styles', 'styles.xml']])));
+    zip.file('xl/styles.xml', styles);
+    sheets.forEach(function(x, i){ zip.file('xl/worksheets/sheet' + (i + 1) + '.xml', x.xml()); });
+    zip.file('xl/worksheets/_rels/sheet1.xml.rels', rels([['rId1', 'drawing', '../drawings/drawing1.xml']]));
+    zip.file('xl/drawings/drawing1.xml', drawing(0, 35, 7, 62));
+    zip.file('xl/drawings/_rels/drawing1.xml.rels', rels([['rId1', 'chart', '../charts/chart1.xml']]));
+    zip.file('xl/charts/chart1.xml', chart1);
+    return zip.generateAsync({type: 'blob', compression: 'DEFLATE', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  }
+
+  function exportXlsx(){
+    var s = state; if (!s) return;
+    if (!window.JSZip){ alert('엑셀 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.'); return; }
+    buildXlsx(s).then(function(blob){ download(blob, '목표금액역산_v3.xlsx'); });
+  }
+  $('dl').addEventListener('click', exportXlsx);
+
+  var rz = null, lastW = 0;
+  window.addEventListener('resize', function(){ clearTimeout(rz); rz = setTimeout(function(){ var w = $('chart').clientWidth; if (state && w && Math.abs(w - lastW) > 8){ lastW = w; chart(state.rows, state.p, state.TN); } }, 150); });
+  render(); lastW = $('chart').clientWidth;
+})();
+</script>
+</body>
+</html>

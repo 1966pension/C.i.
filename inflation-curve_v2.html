@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>물가 상승과 화폐가치 하락 그래프</title>
+<meta name="description" content="현재 물가를 100으로 놓고 물가가 오르는 모습과, 현재 돈의 가치를 100으로 놓고 가치가 줄어드는 모습을 그래프로 보여 줍니다.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="물가 상승과 화폐가치 하락 그래프">
+<meta property="og:description" content="물가인상률 3%면 30년 뒤 가격은 2.4배, 돈의 가치는 41%로 줄어듭니다.">
+<meta property="og:url" content="https://yunhwon.github.io/Retirement-planning/inflation-curve_v2.html">
+<style>
+:root{--cr:#e07b00;--cn:#2457d6;--tB:#fff0dc;--tA:#e6edfc;
+--bg:#f4f6fa;--card:#fff;--ink:#1b2430;--sub:#667385;--line:#e1e6ee;--accent:#2457d6;--accent2:#e6edfc;--bad:#c0392b;--btntxt:#fff}
+@media (prefers-color-scheme:dark){:root{--cr:#ffb454;--cn:#7aa2ff;--tB:#3a2a14;--tA:#1f2b46;
+--bg:#12161c;--card:#1b212a;--ink:#e8ecf2;--sub:#9aa5b5;--line:#2c3542;--accent:#7aa2ff;--accent2:#1f2b46;--bad:#ff8a7a;--btntxt:#0b1220}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:4px 0 6px}
+h2{font-size:16px;margin:0 0 2px}
+.lead{margin:0 0 16px;color:var(--sub);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.grid{grid-template-columns:1fr}}
+label{display:block;font-size:13px;color:var(--sub)}
+.inp{display:flex;align-items:center;margin-top:4px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:0 12px}
+.inp:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent2)}
+.inp input{flex:1;min-width:0;width:100%;border:0;background:transparent;color:var(--ink);font:inherit;font-size:18px;font-weight:600;padding:10px 0;outline:0;text-align:right}
+.inp em{font-style:normal;color:var(--sub);margin-left:6px;font-size:14px}
+.err{color:var(--bad);font-size:13px;margin:10px 0 0}
+.err:empty{display:none}
+.dim{opacity:.35}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.box{border:1px solid var(--line);border-top-width:5px;border-radius:12px;padding:12px 14px}
+.box .t{font-size:13px;color:var(--sub)}
+.box .v{font-size:clamp(24px,5.5vw,32px);font-weight:800;letter-spacing:-.5px;margin:2px 0 6px}
+.box .s{font-size:13px;color:var(--sub)}
+.box .s b{color:var(--ink)}
+.chart svg{width:100%;height:auto;display:block}
+.axis{fill:var(--sub);font-size:11px}
+.grd{stroke:var(--line);stroke-width:1}
+.ln{fill:none;stroke-width:3;stroke-linejoin:round}
+.ref{stroke:var(--sub);stroke-width:1.2;stroke-dasharray:5 4}
+.vlab{font-size:11px;font-weight:700;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+.vl{stroke:var(--sub);stroke-width:1;stroke-dasharray:3 3;opacity:0}
+.hv:hover .vl{opacity:1}
+.band{fill:transparent}
+.btn{width:100%;padding:13px 16px;border:0;border-radius:12px;background:var(--accent);color:var(--btntxt);font:inherit;font-weight:700;cursor:pointer}
+.note{font-size:12px;color:var(--sub);margin:6px 2px 0}
+.insight{font-size:13.5px;color:var(--sub);margin:8px 0 0}
+.insight b{color:var(--ink)}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+<h1>물가 상승과 화폐가치 하락 그래프</h1>
+<p class="lead">물가가 해마다 일정하게 오르면 가격은 얼마나 오르고, 같은 돈의 가치는 얼마나 줄어드는지 보여 줍니다.</p>
+
+<section class="card">
+  <div class="grid">
+    <label for="a">기준값 (현재 = 100)<span class="inp"><input id="a" inputmode="decimal" autocomplete="off" value="100"></span></label>
+    <label for="i">연평균 물가상승률<span class="inp"><input id="i" inputmode="decimal" autocomplete="off" value="3"><em>%</em></span></label>
+    <label for="n">기간<span class="inp"><input id="n" inputmode="numeric" autocomplete="off" value="30"><em>년</em></span></label>
+  </div>
+  <p id="err" class="err" role="alert"></p>
+</section>
+
+<section id="res" aria-live="polite">
+  <div class="card">
+    <div class="cards">
+      <div class="box" style="border-top-color:var(--cr)">
+        <div class="t"><span class="yn"></span> 뒤 가격</div>
+        <div class="v" id="pv" style="color:var(--cr)">-</div>
+        <div class="s" id="ps"></div>
+      </div>
+      <div class="box" style="border-top-color:var(--cn)">
+        <div class="t"><span class="yn"></span> 뒤 돈의 가치</div>
+        <div class="v" id="vv" style="color:var(--cn)">-</div>
+        <div class="s" id="vs"></div>
+      </div>
+      <div class="box" style="border-top-color:var(--sub)">
+        <div class="t">가격이 2배가 되는 데 걸리는 시간</div>
+        <div class="v" id="dv">-</div>
+        <div class="s" id="ds"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>① 가격이 오르는 모습</h2>
+    <p class="lead" style="margin:0">지금 물가를 <span class="b0"></span>으로 놓았을 때, 해마다 오르는 물가 수준</p>
+    <div class="chart" id="c1"></div>
+    <p class="insight" id="i1"></p>
+  </div>
+
+  <div class="card">
+    <h2>② 돈의 가치가 줄어드는 모습</h2>
+    <p class="lead" style="margin:0">지금 돈의 가치를 <span class="b0"></span>으로 놓았을 때, 같은 돈으로 살 수 있는 양</p>
+    <div class="chart" id="c2"></div>
+    <p class="insight" id="i2"></p>
+  </div>
+</section>
+
+<section class="card">
+  <button class="btn" id="dl" type="button">엑셀로 내려받기 (.xlsx)</button>
+  <p class="note">입력값·결과·연도별 값·그래프 2개가 수식으로 들어 있어, 엑셀에서 직접 검산하거나 숫자를 바꿔 볼 수 있습니다.</p>
+</section>
+
+<section class="card">
+  <h2>이렇게 계산했어요</h2>
+  <p class="note" style="font-size:13.5px;margin:6px 0 0">① 가격 = 기준값 × (1 + 물가상승률)<sup>연차</sup><br>
+  ② 돈의 가치 = 기준값 ÷ (1 + 물가상승률)<sup>연차</sup>. 가격이 오른 만큼 같은 돈으로 살 수 있는 양이 줄어드는 것입니다.<br>
+  ③ 가격이 2배(돈의 가치가 절반)가 되는 시간 = ln 2 ÷ ln(1 + 물가상승률). 3%면 약 23.4년이고, 흔히 쓰는 "72 ÷ 상승률" 어림셈은 24년입니다.</p>
+</section>
+<p class="note">물가상승률이 해마다 같다고 가정한 단순 계산입니다. 실제 물가는 해마다 다르게 움직입니다.</p>
+</main>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var state = null;
+  function f1(x){ return (Math.round(x * 10) / 10).toLocaleString('ko-KR', {minimumFractionDigits: 1, maximumFractionDigits: 1}); }
+  function f0(x){ return Math.round(x).toLocaleString('ko-KR'); }
+  function num(s){ return parseFloat(String(s).replace(/[,\s%년]/g, '')); }
+  function read(){
+    var A = num($('a').value), I = num($('i').value), N = num($('n').value), e = '';
+    if (!isFinite(A) || A <= 0 || A > 1e9) e = '기준값을 0보다 큰 값으로 입력해 주세요.';
+    else if (!isFinite(I) || I < 0 || I > 100) e = '물가상승률은 0~100% 사이로 입력해 주세요.';
+    else if (!isFinite(N) || N < 1 || N > 100 || Math.floor(N) !== N) e = '기간은 1~100년 사이의 정수로 입력해 주세요.';
+    return {A: A, I: I / 100, N: N, e: e};
+  }
+  function niceStep(raw){
+    var mag = Math.pow(10, Math.floor(Math.log10(raw / 4))), f = raw / 4 / mag;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
+  }
+  function draw(el, p, rows, key, color, raw, refVal, refLabel, tstar, endLabel){
+    var W = Math.max(300, Math.round(el.clientWidth || 700)), H = 380, pl = 62, pr = 16, pt = 18, pb = 30, n = p.N, iw = W - pl - pr, ih = H - pt - pb;
+    var step = niceStep(raw), kN = Math.max(1, Math.ceil(raw / step - 1e-9)), max = step * kN;
+    function X(y){ return pl + iw * y / n; }
+    function Y(v){ return pt + ih * (1 - v / max); }
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + endLabel + ' 선그래프">';
+    for (var g = 0; g <= kN; g++){
+      var yy = Y(step * g).toFixed(1);
+      s += '<line class="grd" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + yy + '" y2="' + yy + '"/><text class="axis" text-anchor="end" x="' + (pl - 6) + '" y="' + (+yy + 4) + '">' + (step < 1 ? step * g : f0(step * g)) + '</text>';
+    }
+    var stp = Math.ceil(n / Math.max(3, Math.floor(iw / 60)));
+    for (var y = 0; y <= n; y++) if (y % stp === 0 || y === n) s += '<text class="axis" text-anchor="middle" x="' + X(y).toFixed(1) + '" y="' + (H - 8) + '">' + y + '년</text>';
+    if (refVal <= max){
+      var ry = Y(refVal).toFixed(1);
+      s += '<line class="ref" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + ry + '" y2="' + ry + '"/>';
+      if (tstar <= n){
+        s += '<line class="ref" x1="' + X(tstar).toFixed(1) + '" x2="' + X(tstar).toFixed(1) + '" y1="' + ry + '" y2="' + (H - pb) + '"/><circle cx="' + X(tstar).toFixed(1) + '" cy="' + ry + '" r="4" style="fill:' + color + '"/>';
+        var dn = key === 'value';
+        s += '<text class="vlab" style="fill:var(--ink)" text-anchor="end" x="' + (X(tstar) - 8).toFixed(1) + '" y="' + (dn ? +ry + 16 : +ry - 8) + '">' + refLabel + ' · ' + (Math.round(tstar * 10) / 10) + '년</text>';
+      } else {
+        s += '<text class="vlab" style="fill:var(--sub)" text-anchor="start" x="' + (pl + 6) + '" y="' + (key === 'value' ? +ry + 16 : +ry - 6) + '">' + refLabel + ' 수준 (기간 밖)</text>';
+      }
+    }
+    s += '<path class="ln" style="stroke:' + color + '" d="' + rows.map(function(r, i){ return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(r[key]).toFixed(1); }).join('') + '"/>';
+    var bw = iw / n;
+    rows.forEach(function(r){
+      var tip = r.y + '년 후\n가격 ' + f1(r.price) + ' (' + (r.price >= p.A ? '+' : '') + f1((r.price / p.A - 1) * 100) + '%)\n돈의 가치 ' + f1(r.value) + ' (' + f1((r.value / p.A - 1) * 100) + '%)';
+      s += '<g class="hv"><title>' + tip + '</title><line class="vl" x1="' + X(r.y).toFixed(1) + '" x2="' + X(r.y).toFixed(1) + '" y1="' + pt + '" y2="' + (H - pb) + '"/><rect class="band" x="' + (X(r.y) - bw / 2).toFixed(1) + '" y="' + pt + '" width="' + bw.toFixed(1) + '" height="' + ih + '"/></g>';
+    });
+    var L = rows[n], yl = Y(L[key]);
+    s += '<circle cx="' + X(n).toFixed(1) + '" cy="' + yl.toFixed(1) + '" r="3.5" style="fill:' + color + '"/><text class="vlab" text-anchor="end" style="fill:' + color + '" x="' + (X(n) - 8).toFixed(1) + '" y="' + (yl + (key === 'price' ? -9 : 18)).toFixed(1) + '">' + n + '년 ' + endLabel + ' ' + f1(L[key]) + '</text>';
+    el.innerHTML = s + '</svg>';
+  }
+  function charts(){
+    if (!state) return;
+    var p = state.p, rows = state.rows, ts = state.tstar, L = rows[p.N];
+    draw($('c1'), p, rows, 'price', 'var(--cr)', Math.max(L.price, p.A), 2 * p.A, '2배', ts, '가격');
+    draw($('c2'), p, rows, 'value', 'var(--cn)', p.A, 0.5 * p.A, '절반', ts, '가치');
+  }
+  function render(){
+    var p = read();
+    $('err').textContent = p.e; $('res').classList.toggle('dim', !!p.e);
+    if (p.e) return;
+    var rows = [];
+    for (var y = 0; y <= p.N; y++){ var m = Math.pow(1 + p.I, y); rows.push({y: y, price: p.A * m, value: p.A / m}); }
+    var ts = p.I > 0 ? Math.log(2) / Math.log(1 + p.I) : Infinity, L = rows[p.N], m = Math.pow(1 + p.I, p.N);
+    state = {p: p, rows: rows, tstar: ts};
+    Array.prototype.forEach.call(document.querySelectorAll('.yn'), function(e){ e.textContent = p.N + '년'; });
+    Array.prototype.forEach.call(document.querySelectorAll('.b0'), function(e){ e.textContent = (p.A === Math.round(p.A) ? f0(p.A) : f1(p.A)); });
+    var pi = (p.I * 100).toFixed(1).replace('.0', '');
+    $('pv').textContent = f1(L.price);
+    $('ps').innerHTML = '지금 <b>' + (p.A === Math.round(p.A) ? f0(p.A) : f1(p.A)) + '</b> → <b>' + (m).toFixed(2) + '배</b> (' + (L.price >= p.A ? '+' : '') + f1((m - 1) * 100) + '%, 연 ' + pi + '%)';
+    $('vv').textContent = f1(L.value);
+    $('vs').innerHTML = '지금 돈의 <b>' + f1(100 / m) + '%</b>만 남음 (' + f1((1 / m - 1) * 100) + '%)';
+    $('dv').textContent = isFinite(ts) ? f1(ts) + '년' : '-';
+    $('ds').innerHTML = isFinite(ts) ? '같은 시간 동안 돈의 가치는 <b>절반</b>이 됩니다' : '물가가 오르지 않으면 변하지 않습니다';
+    $('i1').innerHTML = '지금 ' + (p.A === Math.round(p.A) ? f0(p.A) : f1(p.A)) + '인 것이 ' + p.N + '년 뒤에는 <b>' + f1(L.price) + '</b>이 됩니다. 처음 10년보다 마지막 10년에 더 많이 오릅니다(복리 효과).';
+    $('i2').innerHTML = '같은 돈으로 살 수 있는 양이 ' + p.N + '년 뒤에는 <b>' + f1(L.value) + '</b>로 줄어듭니다. 가격 그래프와 모양이 거울처럼 반대입니다.';
+    charts();
+  }
+  ['a', 'i', 'n'].forEach(function(id){ $(id).addEventListener('input', render); });
+  function download(blob, name){
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  function colName(i){ var s = ''; while (i > 0){ var m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+  function esc(t){ return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  function buildXlsx(s){
+    var p = s.p, ny = p.N, rows = s.rows;
+    var NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main', RNS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    var ST = {fonts: [], fills: [], borders: [], numFmts: [], xfs: [], dxfs: [], map: {}};
+    function fontXml(o){ return '<font>' + (o.b ? '<b/>' : '') + (o.i ? '<i/>' : '') + '<sz val="' + (o.sz || 10) + '"/><color rgb="FF' + (o.c || '000000') + '"/><name val="Arial"/><family val="2"/></font>'; }
+    function pick(arr, x){ var i = arr.indexOf(x); if (i < 0){ arr.push(x); i = arr.length - 1; } return i; }
+    function fmtId(code){
+      if (!code) return 0; if (code === '#,##0') return 3; if (code === '0.00%') return 10;
+      var i = ST.numFmts.indexOf(code); if (i < 0){ ST.numFmts.push(code); i = ST.numFmts.length - 1; } return 164 + i;
+    }
+    ST.fills.push('<fill><patternFill patternType="none"/></fill>', '<fill><patternFill patternType="gray125"/></fill>');
+    ST.borders.push('<border><left/><right/><top/><bottom/><diagonal/></border>');
+    ST.fonts.push(fontXml({}));
+    function xf(o){
+      o = o || {};
+      var key = JSON.stringify(o); if (ST.map[key] !== undefined) return ST.map[key];
+      var fo = pick(ST.fonts, fontXml(o)), fi = 0, bo = 0;
+      if (o.fill) fi = pick(ST.fills, '<fill><patternFill patternType="solid"><fgColor rgb="FF' + o.fill + '"/><bgColor indexed="64"/></patternFill></fill>');
+      if (o.bd) bo = pick(ST.borders, '<border><left style="thin"><color rgb="FFBFBFBF"/></left><right style="thin"><color rgb="FFBFBFBF"/></right><top style="thin"><color rgb="FFBFBFBF"/></top><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border>');
+      var al = (o.h || o.v || o.wrap) ? '<alignment' + (o.h ? ' horizontal="' + o.h + '"' : '') + (o.v ? ' vertical="' + o.v + '"' : '') + (o.wrap ? ' wrapText="1"' : '') + '/>' : '';
+      var x = '<xf numFmtId="' + fmtId(o.fmt) + '" fontId="' + fo + '" fillId="' + fi + '" borderId="' + bo + '" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"' + (o.un ? ' applyProtection="1"' : '') + ((al || o.un) ? (al ? ' applyAlignment="1">' + al : '>') + (o.un ? '<protection locked="0"/>' : '') + '</xf>' : '/>');
+      ST.xfs.push(x); ST.map[key] = ST.xfs.length - 1; return ST.map[key];
+    }
+    xf({});
+    function dxf(font, fill){
+      return '<dxf><font>' + (font.b ? '<b/>' : '') + '<color rgb="FF' + font.c + '"/></font><fill><patternFill patternType="solid"><fgColor rgb="FF' + fill + '"/><bgColor rgb="FF' + fill + '"/></patternFill></fill></dxf>';
+    }
+    ST.dxfs = [dxf({b: 1, c: '8A4B00'}, 'FFE0B2'), dxf({b: 1, c: '1B5E20'}, 'C8E6C9'), dxf({b: 1, c: '6B5B00'}, 'FFF59D'), dxf({b: 0, c: '000000'}, 'FFF8E1'), dxf({b: 0, c: 'BBBBBB'}, 'FFFFFF')];
+
+    var S = {
+      title: xf({b: 1, sz: 14}), note: xf({c: '7F7F7F', sz: 9}), sec: xf({b: 1, c: 'FFFFFF', fill: '1F3864'}),
+      lbl: xf({b: 1, bd: 1}), noteC: xf({c: '555555', sz: 9, bd: 1}),
+      inN: xf({c: '0000FF', fill: 'FFFF00', un: 1, bd: 1, fmt: '#,##0', h: 'right'}), inP: xf({c: '0000FF', fill: 'FFFF00', un: 1, bd: 1, fmt: '0.00%', h: 'right'}),
+      inT: xf({c: '0000FF', fill: 'FFFF00', un: 1, bd: 1, h: 'right'}),
+      vN: xf({bd: 1, fmt: '#,##0', h: 'right'}), vP1: xf({bd: 1, fmt: '0.0%', h: 'right'}), vP4: xf({bd: 1, fmt: '0.0000%', h: 'right'}), vT: xf({bd: 1, h: 'right'}), vI: xf({bd: 1, h: 'right'}),
+      hdr: xf({b: 1, c: 'FFFFFF', fill: '1F3864', bd: 1, h: 'center', v: 'center', wrap: 1}),
+      cN: xf({bd: 1, fmt: '#,##0'}), cC: xf({bd: 1, h: 'center'}), cT: xf({bd: 1, b: 1, c: '8A4B00'}), cH: xf({bd: 1, c: '999999', sz: 9, h: 'center'}),
+      lg1: xf({fill: 'FFE0B2', bd: 1, b: 1}), lg2: xf({fill: 'C8E6C9', bd: 1, b: 1}), lg3: xf({fill: 'FFF59D', bd: 1, b: 1}), txt: xf({sz: 10}), bold: xf({b: 1})
+    };
+
+    function Sheet(name){ this.name = name; this.rows = {}; this.cols = []; this.cf = []; this.dv = []; this.freeze = false; this.drawing = null; this.heights = {}; this.tab = false; }
+    Sheet.prototype.set = function(r, c, v, st, f){ (this.rows[r] = this.rows[r] || {})[c] = {v: v, s: st || 0, f: f}; };
+    function cellXml(r, c, o){
+      var a = colName(c) + r, v = o.v, f = o.f, s = o.s ? ' s="' + o.s + '"' : '', fx = f ? '<f>' + esc(f) + '</f>' : '';
+      if (v && typeof v === 'object' && v.err) return '<c r="' + a + '"' + s + ' t="e">' + fx + '<v>' + v.err + '</v></c>';
+      if (typeof v === 'number'){ if (!isFinite(v)) v = 0; return '<c r="' + a + '"' + s + '>' + fx + '<v>' + v + '</v></c>'; }
+      if (f) return '<c r="' + a + '"' + s + ' t="str">' + fx + '<v>' + esc(v) + '</v></c>';
+      return '<c r="' + a + '"' + s + ' t="inlineStr"><is><t xml:space="preserve">' + esc(v) + '</t></is></c>';
+    }
+    Sheet.prototype.xml = function(){
+      var self = this, rn = Object.keys(this.rows).map(Number).sort(function(a, b){ return a - b; }), maxC = 1, maxR = 1;
+      var data = rn.map(function(r){
+        var cs = Object.keys(self.rows[r]).map(Number).sort(function(a, b){ return a - b; });
+        maxR = Math.max(maxR, r); maxC = Math.max(maxC, cs[cs.length - 1]);
+        var ht = self.heights[r] ? ' ht="' + self.heights[r] + '" customHeight="1"' : '';
+        return '<row r="' + r + '"' + ht + '>' + cs.map(function(c){ return cellXml(r, c, self.rows[r][c]); }).join('') + '</row>';
+      }).join('');
+      var o = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="' + NS + '" xmlns:r="' + RNS + '">';
+      o += '<dimension ref="A1:' + colName(maxC) + maxR + '"/>';
+      o += '<sheetViews><sheetView workbookViewId="0"' + (this.tab ? ' tabSelected="1"' : '') + '>' + (this.freeze ? '<pane ySplit="' + (this.freezeRow || 1) + '" topLeftCell="A' + ((this.freezeRow || 1) + 1) + '" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A' + ((this.freezeRow || 1) + 1) + '" sqref="A' + ((this.freezeRow || 1) + 1) + '"/>' : '') + '</sheetView></sheetViews>';
+      o += '<sheetFormatPr defaultRowHeight="15"/>';
+      if (this.cols.length) o += '<cols>' + this.cols.map(function(w, i){ return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; }).join('') + '</cols>';
+      o += '<sheetData>' + data + '</sheetData>';
+      if (this.protect) o += '<sheetProtection sheet="1" formatColumns="0" formatRows="0"/>';
+      if (this.merges && this.merges.length) o += '<mergeCells count="' + this.merges.length + '">' + this.merges.map(function(m){ return '<mergeCell ref="' + m + '"/>'; }).join('') + '</mergeCells>';
+      var pr = 1;
+      this.cf.forEach(function(c){ o += '<conditionalFormatting sqref="' + c.sqref + '"><cfRule type="expression" dxfId="' + c.dxf + '" priority="' + (pr++) + '"><formula>' + esc(c.f) + '</formula></cfRule></conditionalFormatting>'; });
+      if (this.dv.length) o += '<dataValidations count="' + this.dv.length + '">' + this.dv.map(function(d){ return '<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="' + d.sqref + '"><formula1>' + esc(d.list) + '</formula1></dataValidation>'; }).join('') + '</dataValidations>';
+      o += '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>';
+      if (this.drawing) o += '<drawing r:id="rId1"/>';
+      return o + '</worksheet>';
+    };
+
+
+
+
+    var CP = "'연도별'!", SM = "'물가'!", last = ny + 2, end = last;
+    var sm = new Sheet('물가'), cp = new Sheet('연도별');
+    sm.tab = true; cp.freeze = true; cp.freezeRow = 1;
+    var A0 = p.A, I0 = p.I, m0 = Math.pow(1 + I0, ny), ts = I0 > 0 ? Math.log(2) / Math.log(1 + I0) : '-';
+    var d1 = xf({bd: 1, fmt: '#,##0.0', h: 'right'}), d4 = xf({bd: 1, fmt: '0.0000', h: 'right'}), pc = xf({bd: 1, fmt: '0.0%', h: 'right'});
+    var inA = xf({c: '0000FF', fill: 'FFFF00', un: 1, bd: 1, fmt: '#,##0.0', h: 'right'});
+    var bigP = xf({b: 1, sz: 12, bd: 1, fmt: '#,##0.0', h: 'right', fill: 'FFF0DC'}), bigV = xf({b: 1, sz: 12, bd: 1, fmt: '#,##0.0', h: 'right', fill: 'E6EDFC'});
+    function secRow(r, t){ for (var c = 1; c <= 4; c++) sm.set(r, c, c === 1 ? t : '', S.sec); }
+    sm.cols = [40, 16, 16, 40];
+    sm.set(1, 1, '물가 상승과 화폐가치 하락', S.title);
+    sm.set(2, 1, '※ 노란 칸이 입력값입니다. 바꾸면 결과·연도별 시트·그래프가 자동으로 다시 계산됩니다. 노란 칸 외에는 시트가 보호되어 있습니다(암호 없음, 검토 > 시트 보호 해제).', S.note);
+    secRow(3, '[입력값]');
+    sm.set(4, 1, '기준값 (현재 = 100)', S.lbl); sm.set(4, 2, A0, inA);
+    sm.set(5, 1, '연평균 물가상승률', S.lbl); sm.set(5, 2, I0, S.inP);
+    sm.set(6, 1, '기간 (년)', S.lbl); sm.set(6, 2, ny, S.vI); sm.set(6, 3, '연도별 시트의 행 수로 정해져 있어 바꿀 수 없습니다. 바꾸려면 웹 페이지에서 다시 내려받으세요.', S.note);
+    secRow(8, '[결과]');
+    sm.set(9, 1, '물가 배수 = (1 + 상승률) ^ 기간', S.lbl); sm.set(9, 2, m0, d4, '(1+B5)^B6');
+    sm.set(10, 1, '기간 뒤 가격 = 기준값 × 배수', S.lbl); sm.set(10, 2, A0 * m0, bigP, 'B4*B9');
+    sm.set(11, 1, '기간 뒤 돈의 가치 = 기준값 ÷ 배수', S.lbl); sm.set(11, 2, A0 / m0, bigV, 'B4/B9');
+    sm.set(12, 1, '가격 변화율', S.lbl); sm.set(12, 2, m0 - 1, pc, 'B9-1');
+    sm.set(13, 1, '돈의 가치 변화율', S.lbl); sm.set(13, 2, 1 / m0 - 1, pc, '1/B9-1');
+    sm.set(14, 1, '지금 돈의 몇 %가 남나', S.lbl); sm.set(14, 2, 1 / m0, pc, '1/B9');
+    sm.set(15, 1, '가격이 2배가 되는 시간 (년) = LN2 ÷ LN(1+상승률)', S.lbl); sm.set(15, 2, ts, d1, 'IF(B5=0,"-",LN(2)/LN(1+B5))');
+    sm.set(16, 1, '어림셈 72 ÷ 상승률(%)', S.lbl); sm.set(16, 2, I0 > 0 ? 72 / (I0 * 100) : '-', d1, 'IF(B5=0,"-",72/(B5*100))'); sm.set(16, 3, '정확한 값보다 조금 크게 나오는 근사식', S.note);
+    sm.set(17, 1, '검산 (연도별 마지막 가격 = 기간 뒤 가격)', S.lbl); sm.set(17, 2, '일치', S.vT, 'IF(ABS(' + CP + 'B' + last + '-B10)<0.000001,"일치","불일치")');
+    sm.set(18, 1, '검산 (가격 × 돈의 가치 = 기준값²)', S.lbl); sm.set(18, 2, '일치', S.vT, 'IF(ABS(' + CP + 'B' + last + '*' + CP + 'C' + last + '-B4^2)<0.000001*B4^2,"일치","불일치")');
+    sm.set(19, 1, '※ 물가상승률이 해마다 같다고 가정한 단순 계산입니다. 실제 물가는 해마다 다르게 움직입니다.', S.note);
+    sm.dv = []; sm.drawing = 1; sm.protect = true; cp.protect = true;
+
+    var cH = ['연차', '가격', '돈의 가치', '가격 변화율', '돈의 가치 변화율', '2배 기준선', '절반 기준선'];
+    cp.cols = [8, 14, 14, 14, 16, 14, 14];
+    cH.forEach(function(h, i){ cp.set(1, i + 1, h, i >= 5 ? xf({b: 1, c: '777777', fill: 'EEEEEE', bd: 1, h: 'center', v: 'center', sz: 9, wrap: 1}) : S.hdr); });
+    var tA = xf({fill: 'FFF0DC', bd: 1, fmt: '#,##0.0'}), tB = xf({fill: 'E6EDFC', bd: 1, fmt: '#,##0.0'}), tP = xf({fill: 'ECEFF3', bd: 1, fmt: '0.0%'}), gN = xf({bd: 1, c: '999999', fmt: '#,##0.0'});
+    rows.forEach(function(r, i){
+      var q = i + 2;
+      cp.set(q, 1, r.y, S.cC);
+      cp.set(q, 2, r.price, tA, SM + '$B$4*(1+' + SM + '$B$5)^A' + q);
+      cp.set(q, 3, r.value, tB, SM + '$B$4/(1+' + SM + '$B$5)^A' + q);
+      cp.set(q, 4, r.price / A0 - 1, tP, 'B' + q + '/' + SM + '$B$4-1');
+      cp.set(q, 5, r.value / A0 - 1, tP, 'C' + q + '/' + SM + '$B$4-1');
+      cp.set(q, 6, 2 * A0, gN, '2*' + SM + '$B$4');
+      cp.set(q, 7, 0.5 * A0, gN, '0.5*' + SM + '$B$4');
+    });
+    var CNS = 'xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="' + RNS + '"';
+    function rich(t, sz, b){ return '<c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="' + sz + '" b="' + (b ? 1 : 0) + '"/></a:pPr><a:r><a:rPr lang="ko-KR" sz="' + sz + '" b="' + (b ? 1 : 0) + '"/><a:t>' + esc(t) + '</a:t></a:r></a:p></c:rich></c:tx>'; }
+    function ttl(t, sz, b){ return '<c:title>' + rich(t, sz, b) + '<c:overlay val="0"/></c:title>'; }
+    function fill(hex){ return '<c:spPr><a:solidFill><a:srgbClr val="' + hex + '"/></a:solidFill></c:spPr>'; }
+    function axes(catTitle, valTitle, catRef){
+      return '<c:catAx><c:axId val="5001"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/>' + ttl(catTitle, 1000, 0) +
+        '<c:numFmt formatCode="General" sourceLinked="0"/><c:majorTickMark val="out"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="5002"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:noMultiLvlLbl val="0"/></c:catAx>' +
+        '<c:valAx><c:axId val="5002"/><c:scaling><c:orientation val="minMax"/><c:min val="0"/></c:scaling><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines/>' + ttl(valTitle, 1000, 0) +
+        '<c:numFmt formatCode="#,##0" sourceLinked="0"/><c:majorTickMark val="out"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="5001"/><c:crosses val="autoZero"/><c:crossBetween val="between"/></c:valAx>';
+    }
+
+    var CPQ = esc(CP);
+    function ser2(i, name, col, hex, dash){
+      return '<c:ser><c:idx val="' + i + '"/><c:order val="' + i + '"/><c:tx><c:v>' + esc(name) + '</c:v></c:tx><c:spPr><a:ln w="' + (dash ? 15875 : 31750) + '" cap="rnd"><a:solidFill><a:srgbClr val="' + hex + '"/></a:solidFill>' + (dash ? '<a:prstDash val="dash"/>' : '') + '<a:round/></a:ln></c:spPr><c:marker><c:symbol val="none"/></c:marker>' +
+        '<c:cat><c:numRef><c:f>' + CPQ + '$A$2:$A$' + end + '</c:f></c:numRef></c:cat><c:val><c:numRef><c:f>' + CPQ + '$' + col + '$2:$' + col + '$' + end + '</c:f></c:numRef></c:val><c:smooth val="0"/></c:ser>';
+    }
+    function mkChart(title, sers){
+      return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace ' + CNS + '><c:roundedCorners val="0"/><c:chart>' + ttl(title, 1200, 1) + '<c:autoTitleDeleted val="0"/><c:plotArea><c:layout/>' +
+        '<c:lineChart><c:grouping val="standard"/><c:varyColors val="0"/>' + sers + '<c:marker val="1"/><c:axId val="5001"/><c:axId val="5002"/></c:lineChart>' + axes('연차(년)', '값', '') + '</c:plotArea><c:legend><c:legendPos val="b"/><c:overlay val="0"/></c:legend><c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart></c:chartSpace>';
+    }
+    var chart1 = mkChart('가격이 오르는 모습 (선 위에 커서를 올려 보세요)', ser2(0, '가격', 'B', 'E07B00', null) + ser2(1, '2배 기준선', 'F', '7F7F7F', true));
+    var chart2 = mkChart('돈의 가치가 줄어드는 모습 (선 위에 커서를 올려 보세요)', ser2(0, '돈의 가치', 'C', '2457D6', null) + ser2(1, '절반 기준선', 'G', '7F7F7F', true));
+    function anchor(id, r0, r1, rid){
+      return '<xdr:twoCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>' + r0 + '</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>4</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>' + r1 + '</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to>' +
+        '<xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="' + id + '" name="Chart ' + id + '"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr><xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:r="' + RNS + '" r:id="' + rid + '"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor>';
+    }
+    var drawingXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">' + anchor(2, 20, 42, 'rId1') + anchor(3, 43, 65, 'rId2') + '</xdr:wsDr>';
+    var REL = 'http://schemas.openxmlformats.org/package/2006/relationships';
+    function rels(items){ return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="' + REL + '">' + items.map(function(x){ return '<Relationship Id="' + x[0] + '" Type="' + RNS + '/' + x[1] + '" Target="' + x[2] + '"/>'; }).join('') + '</Relationships>'; }
+    var sheets = [sm, cp];
+    var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="' + NS + '">' +
+      (ST.numFmts.length ? '<numFmts count="' + ST.numFmts.length + '">' + ST.numFmts.map(function(c, i){ return '<numFmt numFmtId="' + (164 + i) + '" formatCode="' + esc(c) + '"/>'; }).join('') + '</numFmts>' : '') +
+      '<fonts count="' + ST.fonts.length + '">' + ST.fonts.join('') + '</fonts><fills count="' + ST.fills.length + '">' + ST.fills.join('') + '</fills><borders count="' + ST.borders.length + '">' + ST.borders.join('') + '</borders>' +
+      '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="' + ST.xfs.length + '">' + ST.xfs.join('') + '</cellXfs>' +
+      '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles><dxfs count="' + ST.dxfs.length + '">' + ST.dxfs.join('') + '</dxfs></styleSheet>';
+
+    var zip = new JSZip();
+    zip.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      sheets.map(function(x, i){ return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join('') +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>' +
+      '<Override PartName="/xl/charts/chart1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/><Override PartName="/xl/charts/chart2.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/></Types>');
+    zip.file('_rels/.rels', rels([['rId1', 'officeDocument', 'xl/workbook.xml']]));
+    zip.file('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="' + NS + '" xmlns:r="' + RNS + '"><bookViews><workbookView activeTab="0"/></bookViews><sheets>' +
+      sheets.map(function(x, i){ return '<sheet name="' + x.name + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join('') + '</sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>');
+    zip.file('xl/_rels/workbook.xml.rels', rels(sheets.map(function(x, i){ return ['rId' + (i + 1), 'worksheet', 'worksheets/sheet' + (i + 1) + '.xml']; }).concat([['rId' + (sheets.length + 1), 'styles', 'styles.xml']])));
+    zip.file('xl/styles.xml', styles);
+    sheets.forEach(function(x, i){ zip.file('xl/worksheets/sheet' + (i + 1) + '.xml', x.xml()); });
+    zip.file('xl/worksheets/_rels/sheet1.xml.rels', rels([['rId1', 'drawing', '../drawings/drawing1.xml']]));
+    zip.file('xl/drawings/drawing1.xml', drawingXml);
+    zip.file('xl/drawings/_rels/drawing1.xml.rels', rels([['rId1', 'chart', '../charts/chart1.xml'], ['rId2', 'chart', '../charts/chart2.xml']]));
+    zip.file('xl/charts/chart1.xml', chart1); zip.file('xl/charts/chart2.xml', chart2);
+    return zip.generateAsync({type: 'blob', compression: 'DEFLATE', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  }
+
+  function exportXlsx(){
+    var s = state; if (!s) return;
+    if (!window.JSZip){ alert('엑셀 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.'); return; }
+    buildXlsx(s).then(function(blob){ download(blob, '물가상승그래프_v1.xlsx'); });
+  }
+  $('dl').addEventListener('click', exportXlsx);
+
+  var rz = null, lastW = 0;
+  window.addEventListener('resize', function(){ clearTimeout(rz); rz = setTimeout(function(){ var w = $('c1').clientWidth; if (state && w && Math.abs(w - lastW) > 8){ lastW = w; charts(); } }, 150); });
+  render(); lastW = $('c1').clientWidth;
+})();
+</script>
+</body>
+</html>
